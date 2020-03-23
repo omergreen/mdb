@@ -1,0 +1,2 @@
+set(SHELLCODE_FLAGS "--asdfas")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${SHELLCODE_FLAGS}")
