@@ -251,6 +251,15 @@ void get_malloc_memory_status(size_t *free_bytes, size_t *largest_block)
     malloc_unlock();
 }
 
+void malloc_init() {
+  __malloc_head.a.type = ARENA_TYPE_HEAD;
+  __malloc_head.a.size = 0;
+  __malloc_head.a.next = &__malloc_head;
+  __malloc_head.a.prev = &__malloc_head;
+  __malloc_head.next_free = &__malloc_head;
+  __malloc_head.prev_free = &__malloc_head;
+}
+
 void set_malloc_locking(malloc_lock_t lock, malloc_unlock_t unlock)
 {
     if (lock)

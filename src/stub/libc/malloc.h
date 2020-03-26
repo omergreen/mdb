@@ -40,3 +40,11 @@ struct free_arena_header {
     struct arena_header a;
     struct free_arena_header *next_free, *prev_free;
 };
+
+typedef int (*malloc_lock_t)();
+typedef void (*malloc_unlock_t)();
+
+void malloc_init();
+void add_malloc_block(void *buf, size_t size);
+void *malloc(size_t size);
+void free(void *ptr);
