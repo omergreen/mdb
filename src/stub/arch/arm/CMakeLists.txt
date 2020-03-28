@@ -1,5 +1,5 @@
-set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fPIC" "-static")
-set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  "--entry=_start" "-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
+set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fPIE" "-static")
+set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  "--entry=_start" "-Wl,-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
 set(ARCH_SOURCES "")
 
 set(CMAKE_SYSTEM_NAME Linux)
@@ -17,7 +17,7 @@ target_sources("${PROJECT_NAME}" PUBLIC "${ARCH_SOURCES}")
 
 add_custom_command(
   OUTPUT "${PROJECT_NAME}.tmp"
-  COMMAND ${OBJCOPY} --output-format=binary -j .text -j .data -j .bss ${PROJECT_NAME} ${PROJECT_NAME}.tmp
+  COMMAND ${OBJCOPY} --output-format=binary -j .text -j .data -j .bss -j .got ${PROJECT_NAME} ${PROJECT_NAME}.tmp
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_NAME}.tmp ${PROJECT_NAME}.bin
   DEPENDS ${PROJECT_NAME}
 )

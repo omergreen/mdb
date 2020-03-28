@@ -46,5 +46,5 @@ typedef void (*malloc_unlock_t)();
 
 void malloc_init();
 void add_malloc_block(void *buf, size_t size);
-void *malloc(size_t size);
-void free(void *ptr);
+static void *_malloc(size_t size);
+static void _free(void *ptr);
