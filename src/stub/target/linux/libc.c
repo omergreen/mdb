@@ -4,7 +4,7 @@
 #include <machine/target/libc.h>
 
 void *mmap2(void *addr, unsigned long len, int prot, int flags, int fildes, signed long off) {
-  return syscall(__NR_mmap2, (long)addr, (long)len, (long)prot, (long)flags, (long)fildes, (long)off);
+  return (void *)syscall(__NR_mmap2, (long)addr, (long)len, (long)prot, (long)flags, (long)fildes, (long)off);
 }
 
 int _open(char *fname, int flags) {

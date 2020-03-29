@@ -8,6 +8,8 @@
 
 #define PAGE_SIZE 4096
 
+struct linux_data g_linux_data;
+
 static void cleanup() {
   _close(g_linux_data.log_fd);
 }

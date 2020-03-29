@@ -27,8 +27,8 @@ static struct free_arena_header __malloc_head = {
 static bool malloc_lock_nop(void) {return true;}
 static void malloc_unlock_nop(void) {}
 
-static malloc_lock_t malloc_lock = &malloc_lock_nop;
-static malloc_unlock_t malloc_unlock = &malloc_unlock_nop;
+static malloc_lock_t malloc_lock = (malloc_lock_t)&malloc_lock_nop;
+static malloc_unlock_t malloc_unlock = (malloc_unlock_t)&malloc_unlock_nop;
 
 static inline void mark_block_dead(struct free_arena_header *ah)
 {
@@ -252,6 +252,19 @@ void get_malloc_memory_status(size_t *free_bytes, size_t *largest_block)
     malloc_unlock();
 }
 
+void set_malloc_locking(malloc_lock_t lock, malloc_unlock_t unlock)
+{
+    if (lock)
+        malloc_lock = lock;
+    else
+        malloc_lock = (malloc_lock_t)&malloc_lock_nop;
+    
+    if (unlock)
+        malloc_unlock = unlock;
+    else
+        malloc_unlock = (malloc_unlock_t)&malloc_unlock_nop;
+}
+
 void malloc_init() {
   __malloc_head.a.type = ARENA_TYPE_HEAD;
   __malloc_head.a.size = 0;
@@ -264,18 +277,5 @@ void malloc_init() {
 
   g_ops.malloc = &_malloc;
   g_ops.free = &_free;
-}
-
-void set_malloc_locking(malloc_lock_t lock, malloc_unlock_t unlock)
-{
-    if (lock)
-        malloc_lock = lock;
-    else
-        malloc_lock = &malloc_lock_nop;
-    
-    if (unlock)
-        malloc_unlock = unlock;
-    else
-        malloc_unlock = &malloc_unlock_nop;
 }
 

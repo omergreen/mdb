@@ -12,7 +12,7 @@ extern unsigned long __GOT_LENGTH;
 
 void fix_got();
 
-static void _start(void *args) {
+__attribute__((externally_visible,used)) void _start(void *args) {
   fix_got();
   return;
   target_init(args);
