@@ -1,8 +1,12 @@
 #pragma once
+#include <stdbool.h>
+
+#include "breakpoint.h"
+#include <machine/arch/registers.h>
 
 extern struct ops {
-  void (*breakpoint_put)(struct breakpoint *);
-  void (*breakpoint_remove)(struct breakpoint *);
+  bool (*breakpoint_put)(struct breakpoint *);
+  bool (*breakpoint_remove)(struct breakpoint *);
   void (*cache_flush)();
   unsigned long (*reg_read)(enum registers reg);
   void (*reg_write)(enum registers reg, unsigned long value);

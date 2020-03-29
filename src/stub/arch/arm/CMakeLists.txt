@@ -1,12 +1,12 @@
-set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fPIE" "-static")
-set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  "--entry=_start" "-Wl,-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
-set(ARCH_SOURCES "")
+set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fno-builtin" "-fPIE" "-static")
+set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  "--entry=_start" "-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
+file(GLOB ARCH_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.c")
 
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(CMAKE_SYSROOT /home/me/x-tools/arm-unknown-linux-musleabi/arm-unknown-linux-musleabi/sysroot)
-set(tools /home/me/x-tools/arm-unknown-linux-musleabi/bin/arm-unknown-linux-musleabi)
+set(CMAKE_SYSROOT /usr/arm-linux-gnueabi)
+set(tools arm-linux-gnueabi)
 set(CMAKE_C_COMPILER ${tools}-gcc)
 set(OBJCOPY ${tools}-objcopy)
 # set(CMAKE_CXX_COMPILER ${tools}/bin/arm-linux-gnueabihf-g++)
