@@ -5,11 +5,8 @@ file(GLOB ARCH_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.c")
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(CMAKE_SYSROOT /usr/arm-linux-gnueabi)
-set(tools arm-linux-gnueabi)
-set(CMAKE_C_COMPILER ${tools}-gcc)
-set(OBJCOPY ${tools}-objcopy)
-# set(CMAKE_CXX_COMPILER ${tools}/bin/arm-linux-gnueabihf-g++)
+set(CMAKE_C_COMPILER ${TOOLCHAIN_PREFIX}gcc)
+set(OBJCOPY ${TOOLCHAIN_PREFIX}objcopy)
 
 target_compile_options("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_C_FLAGS}")
 target_link_options("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_LD_FLAGS}")
@@ -21,3 +18,4 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_NAME}.tmp ${PROJECT_NAME}.bin
   DEPENDS ${PROJECT_NAME}
 )
+

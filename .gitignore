@@ -1,3 +1,4 @@
+.ccls-cache
 compile_commands.json
 .clangd/
 src/stub/build/

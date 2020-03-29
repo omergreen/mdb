@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16.5)
+set(CMAKE_SKIP_INSTALL_RULES true)
 project(stub C ASM)
 
 if(NOT DEFINED ARCH)
@@ -11,6 +12,10 @@ if(NOT DEFINED TARGET_TYPE)
   message(FATAL_ERROR "TARGET_TYPE is not defined, set it to one of target/ subdirectories")
 elseif(NOT EXISTS "${PROJECT_SOURCE_DIR}/target/${TARGET_TYPE}")
   message(FATAL_ERROR "TARGET_TYPE: ${TARGET_TYPE} is not valid, set it to one of target/ subdirectories")
+endif()
+
+if(NOT DEFINED TOOLCHAIN_PREFIX)
+  message(FATAL_ERROR "TOOLCHAIN_PREFIX is not defined")
 endif()
 
 file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/machine")
@@ -30,3 +35,4 @@ include("${PROJECT_SOURCE_DIR}/machine/target/CMakeLists.txt")
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_NAME}.bin)
 add_custom_target("${PROJECT_NAME}.bin" ALL DEPENDS "${PROJECT_NAME}.tmp")
+
