@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <machine/arch/libc.h>
+#include <machine/target/libc.h>
 #include "malloc.h"
 
 void *memcpy(void *dst, const void *src, size_t n);

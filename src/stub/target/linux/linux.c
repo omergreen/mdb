@@ -14,16 +14,16 @@ static void cleanup() {
   _close(g_linux_data.log_fd);
 }
 
-void init_log() {
+static void init_log() {
   /* int fd = _open("/tmp/stub_log.txt", O_WRONLY); */
-  g_linux_data.log_fd = _open("/tmp/stub_log.txt", O_WRONLY);
-  /* if (g_linux_data.log_fd == -1) { */
-  /*   char *d = 0; */
-  /*   *d = 1; */
-  /* } */
+  g_linux_data.log_fd = _open("/tmp/stub_log.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+  if (g_linux_data.log_fd == -1) {
+    char *d = 0;
+    *d = 1;
+  }
 }
 
-static void log(unsigned char *data, unsigned int length) {
+static void log(char *data, unsigned int length) {
   _write(g_linux_data.log_fd, (char *)data, length);
 }
 
@@ -34,5 +34,6 @@ void target_init(void *args) {
   init_log();
   add_malloc_block(free_space, PAGE_SIZE);
   g_ops.log = &log;
-  g_ops.cleanup = cleanup;
+  g_ops.cleanup = &cleanup;
 }
+
