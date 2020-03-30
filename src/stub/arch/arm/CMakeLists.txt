@@ -13,9 +13,9 @@ target_link_options("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_LD_FLAGS}")
 target_sources("${PROJECT_NAME}" PUBLIC "${ARCH_SOURCES}")
 
 add_custom_command(
-  OUTPUT "${PROJECT_NAME}.tmp"
-  COMMAND ${OBJCOPY} --output-format=binary -j .text -j .data -j .bss -j .got ${PROJECT_NAME} ${PROJECT_NAME}.tmp
-  COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_NAME}.tmp ${PROJECT_NAME}.bin
-  DEPENDS ${PROJECT_NAME}
+    OUTPUT "${PROJECT_NAME}.tmp"
+    COMMAND ${OBJCOPY} --output-format=binary -j .text -j .data -j .bss -j .got ${PROJECT_NAME} ${PROJECT_NAME}.tmp
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_NAME}.tmp ${PROJECT_NAME}.bin
+    DEPENDS ${PROJECT_NAME}
 )
 

@@ -6,15 +6,15 @@ struct breakpoint; // define here first to avoid errors due to breakpoint.h and 
 #include <machine/arch/breakpoint.h>
 
 enum breakpoint_type {
-	USER,
-	TEMPORARY
+    USER,
+    TEMPORARY
 };
 
 #define BREAKPOINT_ORIGINAL_DATA_LENGTH (10)
 struct breakpoint {
     unsigned int address;
     bool enabled;
-	enum breakpoint_type type;
-	struct breakpoint_arch_specific arch_specific;
+    enum breakpoint_type type;
+    struct breakpoint_arch_specific arch_specific;
 };
 

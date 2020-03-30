@@ -6,8 +6,8 @@ void *memcpy(void *dst, const void *src, size_t n)
     const char *p = src;
     char *q = dst;
     while (n--) {
-            *q++ = *p++;
-        }
+        *q++ = *p++;
+    }
     return dst;
 }
 
@@ -15,8 +15,8 @@ void *memset(void *dst, int c, size_t n)
 {
     char *q = dst;
     while (n--) {
-            *q++ = c;
-        }
+        *q++ = c;
+    }
     return dst;
 }
 
@@ -35,8 +35,8 @@ char *strcpy(char *dst, const char *src)
     char ch;
 
     do {
-            *q++ = ch = *p++;
-        } while (ch);
+        *q++ = ch = *p++;
+    } while (ch);
 
     return dst;
 }
@@ -44,10 +44,10 @@ char *strcpy(char *dst, const char *src)
 char *strchr(const char *s, int c)
 {
     while (*s != (char)c) {
-            if (!*s)
-                return NULL;
-            s++;
-        }
+        if (!*s)
+            return NULL;
+        s++;
+    }
 
     return (char *)s;
 }
