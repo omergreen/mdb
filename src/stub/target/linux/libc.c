@@ -2,8 +2,8 @@
 #include <sys/syscall.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#include <machine/target/syscall.h>
-#include <machine/target/libc.h>
+#include "syscall.h"
+#include <libc/libc.h>
 
 void *mmap2(void *addr, unsigned long len, int prot, int flags, int fildes, signed long off) {
     return (void *)syscall(__NR_mmap2, (long)addr, (long)len, (long)prot, (long)flags, (long)fildes, (long)off);
@@ -29,3 +29,14 @@ unsigned int _write(int fd, char *buf, unsigned int length) {
 int _close(int fd) {
     return syscall(__NR_close, fd);
 }
+
+void cache_flush_linux(void *start, unsigned int length) { // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/clear_cache.c
+#if ARCH == arm
+    syscall(__ARM_NR_cacheflush, start, start + length, 0);
+#elif ARCH == mips
+    syscall(__NR_cacheflush, start, length, BCACHE);
+#else
+#error "bassa"
+#endif
+}
+

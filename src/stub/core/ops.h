@@ -7,7 +7,7 @@
 extern struct ops {
   bool (*breakpoint_put)(struct breakpoint *);
   bool (*breakpoint_remove)(struct breakpoint *);
-  void (*cache_flush)();
+  void (*cache_flush)(void *start, unsigned int length);
   unsigned long (*reg_read)(enum registers reg);
   void (*reg_write)(enum registers reg, unsigned long value);
   unsigned int (*recv)(char *output, unsigned int legnth);
@@ -15,7 +15,8 @@ extern struct ops {
   void *(*malloc)(unsigned int size);
   void (*free)(void *addr);
   void (*cleanup)();
-  void (*log)(char *data, unsigned int length);
+  void (*log)(const char *format, ...);
 } g_ops;
 
 void target_init(void *args);
+

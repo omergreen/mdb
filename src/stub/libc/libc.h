@@ -1,9 +1,12 @@
 #pragma once
 
+#define TINYPRINTF_OVERRIDE_LIBC 1
+
 #include <stddef.h>
 #include <machine/arch/libc.h>
 #include <machine/target/libc.h>
 #include "malloc.h"
+#include "tinyprintf.h"
 
 void *memcpy(void *dst, const void *src, size_t n);
 void *memset(void *dst, int c, size_t n);

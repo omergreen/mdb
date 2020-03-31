@@ -1,5 +1,6 @@
-set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fno-builtin" "-fPIE" "-static")
+set(ARCH_SHELLCODE_C_FLAGS "-nostdlib" "-nodefaultlibs" "-nostartfiles" "-fno-builtin" "-fPIE" "-static" "-ggdb")
 set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  "--entry=_start" "-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
+set(ARCH_SHELLCODE_LINK_LIBRARIES "-lgcc")
 file(GLOB ARCH_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.c")
 
 set(CMAKE_SYSTEM_NAME Linux)
@@ -10,6 +11,7 @@ set(OBJCOPY ${TOOLCHAIN_PREFIX}objcopy)
 
 target_compile_options("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_C_FLAGS}")
 target_link_options("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_LD_FLAGS}")
+target_link_libraries("${PROJECT_NAME}" PUBLIC "${ARCH_SHELLCODE_LINK_LIBRARIES}")
 target_sources("${PROJECT_NAME}" PUBLIC "${ARCH_SOURCES}")
 
 add_custom_command(

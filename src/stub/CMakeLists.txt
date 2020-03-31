@@ -26,7 +26,7 @@ add_definitions(-DARCH=${ARCH} -DTARGET_TYPE=${TARGET_TYPE})
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
-set(STUB_SOURCES "core/core.c" "libc/malloc.c" "libc/basic.c")
+set(STUB_SOURCES "core/core.c" "libc/malloc.c" "libc/basic.c" "libc/tinyprintf.c")
 add_executable("${PROJECT_NAME}" "${STUB_SOURCES}")
 
 # add_subdirectory("${PROJECT_SOURCE_DIR}/machine")

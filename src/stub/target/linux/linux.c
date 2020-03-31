@@ -1,30 +1,38 @@
-#include <machine/target/target.h>
-#include <machine/target/linux.h>
-#include <machine/target/libc.h>
+#include <libc/libc.h>
 #include <core/ops.h>
-#include <libc/malloc.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <stdarg.h>
+
+#include "target.h"
+#include "linux.h"
 
 #define PAGE_SIZE 4096
 
 struct linux_data g_linux_data;
 
 static void cleanup() {
-    _close(g_linux_data.log_fd);
+    close(g_linux_data.log_fd);
 }
 
 static void init_log() {
-    /* int fd = _open("/tmp/stub_log.txt", O_WRONLY); */
-    g_linux_data.log_fd = _open("/tmp/stub_log.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666);
-    if (g_linux_data.log_fd == -1) {
-        char *d = 0;
-        *d = 1;
-    }
+    g_linux_data.log_fd = 1;
+    /* g_linux_data.log_fd = _open("/tmp/stub_log.txt", O_CREAT | O_WRONLY | O_TRUNC, 0666); */
+    /* if (g_linux_data.log_fd == -1) { */
+    /*     char *d = 0; */
+    /*     *d = 1; */
+    /* } */
 }
 
-static void log(char *data, unsigned int length) {
-    _write(g_linux_data.log_fd, (char *)data, length);
+static void log(const char *format, ...) {
+    char buffer[1024];
+
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+
+    write(g_linux_data.log_fd, buffer, strlen(buffer) + 1);
 }
 
 void target_init(void *args) {
@@ -35,5 +43,6 @@ void target_init(void *args) {
     add_malloc_block(free_space, PAGE_SIZE);
     g_ops.log = &log;
     g_ops.cleanup = &cleanup;
+    g_ops.cache_flush = &cache_flush_linux;
 }
 

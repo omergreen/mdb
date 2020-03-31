@@ -1,85 +1,77 @@
 #include "breakpoint.h"
 #include <core/ops.h>
-
+#include <core/log.h>
 #include <libc/libc.h>
 
-/* #define BREAKPOINT_LENGTH (4) */
-#define JUMP_BREAKPOINT_STUB_SIZE (jump_breakpoint_stub_end - jump_breakpoint_stub)
-/* #define BREAKPOINT_STUB_TRAMPOLINE_OFFSET (jump_breakpoint_stub_trampoline - jump_breakpoint_stub) */
-#define JUMP_BREAKPOINT_STUB_PTR_OFFSET (jump_breakpoint_stub_ptr - jump_breakpoint_stub)
+__attribute__((noreturn)) void jump_breakpoint_epilogue(unsigned int return_address, unsigned int sp) {
+    extern unsigned int trampoline;
+    *&trampoline = build_jump((unsigned int)&trampoline, return_address);
+    g_ops.cache_flush(&trampoline, BREAKPOINT_LENGTH);
 
-__attribute__((naked)) void jump_breakpoint_epilogue(unsigned int return_address) {
+    // from this function we're returning straight to the place where the breakpoint was before
     asm("\
-    MOV R1, R0;\
-    ADR R0, trampoline;\
-    BL build_jump;\
+    .global trampoline;\
 \
-    STR R0, trampoline;\
+    MOV SP, %0;\
     POP {R0,R1};\
     MSR cpsr, R0;\
     POP {R0-R12,LR};\
 \
 trampoline:\
     .word 0;\
-    ");
+    "
+    :: "r" (sp)
+    ); // well, we can't really avoid this inline assembly
+
+    __builtin_unreachable();
 }
-void breakpoint_handler() {
+
+__attribute__((noreturn)) void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
+    g_ops.log("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
+    g_ops.breakpoint_remove(bp);
+    jump_breakpoint_epilogue(bp->address, sp);
 }
 
-/* __attribute__((naked)) void jump_breakpoint_stub() { */
-asm("\
-.global jump_breakpoint_stub;\
-.global jump_breakpoint_stub_end;\
-.global jump_breakpoint_stub_ptr;\
-jump_breakpoint_stub:\
-    PUSH {R0-R12,LR};\
-    MRS R0, cpsr;\
-    ADD R1, SP, #4*14;\
-    PUSH {R0,R1};\
-\
-    ADR LR, jump_breakpoint_epilogue;\
-    LDR R0, jump_breakpoint_stub_ptr;\
-    MOV R1, SP;\
-    B breakpoint_handler;\
-\
-jump_breakpoint_stub_ptr:\
-    .word 0;\
-\
-jump_breakpoint_stub_end:\
-    ");
-/* } */
-
-extern void *jump_breakpoint_stub;
-extern void *jump_breakpoint_stub_end;
-extern void *jump_breakpoint_stub_ptr;
-
+void fill_offset(void *stub, int offset, void *value) {
+    *(void **)((unsigned int)(stub) + offset) = value;
+}
 
 bool jump_breakpoint_put(struct breakpoint *bp) {
     void *stub = g_ops.malloc(JUMP_BREAKPOINT_STUB_SIZE);
-    memcpy(stub, jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
-    /* unsigned int *trampoline_address = (unsigned char *)stub + BREAKPOINT_STUB_TRAMPOLINE_OFFSET; */
-    /* *trampoline_address = build_jump((unsigned int)trampoline_address, bp->address + 4); */
-    struct breakpoint **ptr_address = (struct breakpoint **)((unsigned char*)stub + JUMP_BREAKPOINT_STUB_PTR_OFFSET);
+    if (stub == NULL) {
+        ERROR("malloc for breakpoint stub returned NULL");
+        return false;
+    }
 
-    bp->arch_specific.stub = stub;
+    DEBUG("stub for bp at 0x%08x allocated at 0x%08x", bp->address, stub);
+
+    memcpy(stub, &jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
+    g_ops.cache_flush(stub, JUMP_BREAKPOINT_STUB_SIZE);
+
+    // fill in the required stuff for the stub:
+    // - bp_address so that the handler will know which breakpoint was triggered
+    // - handler_func and epilogue_func are technically static, but we can't fill them 
+    //   at compile time due to PICness. We can initialize them once at init time instead of each
+    //   time here, but does it really matter
+    fill_offset(stub, JUMP_BREAKPOINT_STUB_BP_ADDRESS_OFFSET, bp);
+    fill_offset(stub, JUMP_BREAKPOINT_STUB_HANDLER_FUNC_OFFSET, &jump_breakpoint_handler);
+    fill_offset(stub, JUMP_BREAKPOINT_STUB_EPILOGUE_FUNC_OFFSET, &jump_breakpoint_epilogue);
+
+    bp->arch_specific.stub = stub; // save it for later so we could free it
+
     memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
-
-    *(unsigned int *)bp->address = build_jump((unsigned int)bp->address, (unsigned int)stub);
-
-    g_ops.cache_flush();
+    *(unsigned int *)bp->address = build_jump(bp->address, (unsigned int)stub);
+    g_ops.cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 
     return true;
 }
 
 bool jump_breakpoint_disable(struct breakpoint *bp) {
-    if (!bp->enabled) { // TODO: move..
-        return false;
-    }
+    DEBUG("disabling bp at 0x%08x", bp->address);
 
     g_ops.free(bp->arch_specific.stub);
-    memcpy((void *)bp->address, bp->arch_specific.original_data, sizeof(bp->arch_specific.original_data));
-    g_ops.cache_flush();
-    /* bp->enabled = false; */
+    memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);
+    g_ops.cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 
     return true;
 }

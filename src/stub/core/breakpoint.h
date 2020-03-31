@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __CORE_BREAKPOINT_H // ccls makes a fuss about cyclic includes
+#define __CORE_BREAKPOINT_H
 
 struct breakpoint; // define here first to avoid errors due to breakpoint.h and machine breakpoint.h referencing each other
 
@@ -17,4 +18,6 @@ struct breakpoint {
     enum breakpoint_type type;
     struct breakpoint_arch_specific arch_specific;
 };
+
+#endif
 
