@@ -2,7 +2,7 @@
 
 #include <core/ops.h>
 
-#define _MESSAGE(s, type, ...) g_ops.log("%s:%d %s: " s "\n", __FILE__, __LINE__, type, ##__VA_ARGS__)
+#define _MESSAGE(s, type, ...) g_ops.log("%s %s:%d: " s "\n", type, __FILE__, __LINE__, ##__VA_ARGS__)
 
 #define DEBUGMODE
 #ifdef DEBUGMODE

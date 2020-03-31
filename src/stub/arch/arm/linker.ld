@@ -9,3 +9,4 @@ SECTIONS {
     __GOT_LENGTH = SIZEOF(.got);
     __START_OFFSET = SIZEOF(.note.gnu.build-id);
 }
+
