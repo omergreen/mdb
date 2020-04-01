@@ -8,8 +8,8 @@ extern struct ops {
   bool (*breakpoint_put)(struct breakpoint *);
   bool (*breakpoint_remove)(struct breakpoint *);
   void (*cache_flush)(void *start, unsigned int length);
-  unsigned long (*reg_read)(enum registers reg);
-  void (*reg_write)(enum registers reg, unsigned long value);
+  unsigned long (*reg_read)(enum registers_enum reg);
+  void (*reg_write)(enum registers_enum reg, unsigned long value);
   unsigned int (*recv)(char *output, unsigned int legnth);
   unsigned int (*send)(char *data, unsigned int legnth);
   void *(*malloc)(unsigned int size);

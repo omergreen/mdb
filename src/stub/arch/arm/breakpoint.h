@@ -1,14 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-
-#define BREAKPOINT_LENGTH (4)
-
-struct breakpoint_arch_specific { // define here to avoid errors due to breakpoint.h and machine breakpoint.h referencing each other
-    void *stub;
-    unsigned char original_data[BREAKPOINT_LENGTH];
-};
-
 #include <core/breakpoint.h>
 
 bool jump_breakpoint_put(struct breakpoint *bp);
