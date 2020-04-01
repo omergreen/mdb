@@ -1,4 +1,5 @@
 #include "breakpoint.h"
+#include "registers.h"
 #include <core/ops.h>
 #include <core/log.h>
 #include <libc/libc.h>
@@ -28,11 +29,18 @@ trampoline:\
 
 __attribute__((noreturn)) void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
     g_ops.log("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
+
+    struct registers_from_stub *regs = (struct registers_from_stub *)sp;
+    registers_get_from_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp, bp->address);
+
+    registers_print_all(bp);
+
+    registers_update_to_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp);
     g_ops.breakpoint_remove(bp);
     jump_breakpoint_epilogue(bp->address, sp);
 }
 
-void fill_offset(void *stub, int offset, void *value) {
+static void fill_offset(void *stub, int offset, void *value) {
     *(void **)((unsigned int)(stub) + offset) = value;
 }
 
