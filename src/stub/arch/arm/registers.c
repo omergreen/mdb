@@ -32,16 +32,53 @@ static void print_colored_line(const char *s1, const char *s2, const char *s3, c
     g_ops.log(STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT "\n", 
               COLORIZE_REGISTER_ARG(s1), v1, COLORIZE_REGISTER_ARG(s2), v2, COLORIZE_REGISTER_ARG(s3), v3, COLORIZE_REGISTER_ARG(s4), v4);
 }
+static const char *cpsr_mode_to_string(unsigned int mode) {
+    const char *s;
+    switch (mode) {
+        case CPSR_M_USR:
+            s = "user";
+            break;
+        case CPSR_M_FIQ:
+            s = "fast irq";
+            break;
+        case CPSR_M_IRQ:
+            s = "irq";
+            break;
+        case CPSR_M_SVC:
+            s = "service";
+            break;
+        case CPSR_M_ABT:
+            s = "abort";
+            break;
+        case CPSR_M_MON:
+            s = "monitor";
+            break;
+        case CPSR_M_HYP:
+            s = "hypervisor";
+            break;
+        case CPSR_M_UND:
+            s = "undefined";
+            break;
+        case CPSR_M_SYS:
+            s = "system";
+            break;
+        default:
+            ERROR("unknown CPSR mode 0x%x", mode);
+            s = NULL;
+    }
+
+    return s;
+}
 static void print_cpsr(union cpsr *cpsr) {
 #define BOLDIFY_FLAG(value) COLORIZE_ARGS(value ? KBOLD : KDIM)
 
     g_ops.log(COLORIZE_FORMAT("cpsr") " 0x%-8x  [ " COLORIZE_FORMAT("thumb ") 
               COLORIZE_FORMAT("overflow ") COLORIZE_FORMAT("carry ") 
-              COLORIZE_FORMAT("zero ") COLORIZE_FORMAT("negative ") "]\n", 
+              COLORIZE_FORMAT("zero ") COLORIZE_FORMAT("negative ") "] (%s mode)\n", 
 
               COLORIZE_REGISTER_ARG(), cpsr->packed, BOLDIFY_FLAG(cpsr->bits.thumb), 
               BOLDIFY_FLAG(cpsr->bits.overflow), BOLDIFY_FLAG(cpsr->bits.carry), 
-              BOLDIFY_FLAG(cpsr->bits.zero), BOLDIFY_FLAG(cpsr->bits.negative));
+              BOLDIFY_FLAG(cpsr->bits.zero), BOLDIFY_FLAG(cpsr->bits.negative), cpsr_mode_to_string(cpsr->bits.mode));
 }
 void registers_print_all(struct breakpoint *bp) {
     print_colored_line("r0", "r1", "r2", "r3", bp->arch_specific.regs.r0, bp->arch_specific.regs.r1, bp->arch_specific.regs.r2, bp->arch_specific.regs.r3);
