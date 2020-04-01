@@ -5,6 +5,9 @@
 #define COLORS
 #define DEBUGMODE
 
+#define COLORIZE_FORMAT(format) "%s" format "%s"
+#define COLORIZE_ARGS(color, ...) color, ##__VA_ARGS__, KNRM
+
 #ifdef COLORS
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
@@ -14,6 +17,9 @@
 #define KMAG  "\x1B[35m"
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
+#define KBOLD "\x1B[1m"
+#define KDIM "\x1B[2m"
+#define KUNDERLINE "\x1B[4m"
 #else
 #define KNRM  ""
 #define KRED  ""
@@ -23,10 +29,13 @@
 #define KMAG  ""
 #define KCYN  ""
 #define KWHT  ""
+#define KBOLD ""
+#define KDIM ""
+#define KUNDERLINE ""
 #endif
 
 
-#define _MESSAGE(s, type, color, ...) g_ops.log("%s%s%s %s:%d: %s" s "%s\n", color, type, KNRM, __FILE__, __LINE__, color, ##__VA_ARGS__, KNRM)
+#define _MESSAGE(s, type, color, ...) g_ops.log(COLORIZE_FORMAT("%s") " %s:%d: %s" s "%s\n", COLORIZE_ARGS(color, type), __FILE__, __LINE__, COLORIZE_ARGS(color, ##__VA_ARGS__))
 
 #ifdef DEBUGMODE
 #define DEBUG(s, ...) _MESSAGE(s, "DEBUG", KYEL, ##__VA_ARGS__)
