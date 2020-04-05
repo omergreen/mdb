@@ -1,5 +1,7 @@
 #pragma once
 
+#include <target/interface.h>
+
 #define COLORS
 #define DEBUGMODE
 
@@ -42,4 +44,11 @@
 #endif
 
 #define ERROR(s, ...) _MESSAGE(s, "ERROR", KRED, ##__VA_ARGS__)
+
+// TODO: maybe make the debugger quit on assert?
+#define assert(condition) do { \
+                              if (condition) { \
+                                  ERROR("assert(" ## condition ## ") failed"); \
+                              } \
+                          } while(0);
 
