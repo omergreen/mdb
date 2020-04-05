@@ -19,7 +19,7 @@ void do_nabaz() {
     };
 }
 
-__attribute__((externally_visible,used,section(".init"))) void _start(void *args) {
+__attribute__((used,section(".init"))) void _start(void *args) {
     fix_got();
     arch_init();
     target_init(args);
