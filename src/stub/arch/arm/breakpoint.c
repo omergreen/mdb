@@ -1,13 +1,12 @@
 #include "breakpoint.h"
 #include "registers.h"
-#include <core/ops.h>
 #include <core/log.h>
 #include <libc/libc.h>
 
 __attribute__((noreturn)) void jump_breakpoint_epilogue(unsigned int return_address, unsigned int sp) {
     extern unsigned int trampoline;
     *&trampoline = build_jump((unsigned int)&trampoline, return_address);
-    g_ops.cache_flush(&trampoline, BREAKPOINT_LENGTH);
+    cache_flush(&trampoline, BREAKPOINT_LENGTH);
 
     // from this function we're returning straight to the place where the breakpoint was before
     asm("\
@@ -28,7 +27,7 @@ trampoline:\
 }
 
 __attribute__((noreturn)) void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
-    g_ops.log("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
+    target_log("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
 
     struct registers_from_stub *regs = (struct registers_from_stub *)sp;
     registers_get_from_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp, bp->address);
@@ -36,7 +35,7 @@ __attribute__((noreturn)) void jump_breakpoint_handler(struct breakpoint *bp, un
     registers_print_all(bp);
 
     registers_update_to_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp);
-    g_ops.breakpoint_remove(bp);
+    arch_jump_breakpoint_disable(bp);
     jump_breakpoint_epilogue(bp->address, sp);
 }
 
@@ -44,8 +43,8 @@ static void fill_offset(void *stub, int offset, void *value) {
     *(void **)((unsigned int)(stub) + offset) = value;
 }
 
-bool jump_breakpoint_put(struct breakpoint *bp) {
-    void *stub = g_ops.malloc(JUMP_BREAKPOINT_STUB_SIZE);
+bool arch_jump_breakpoint_put(struct breakpoint *bp) {
+    void *stub = target_malloc(JUMP_BREAKPOINT_STUB_SIZE);
     if (stub == NULL) {
         ERROR("malloc for breakpoint stub returned NULL");
         return false;
@@ -54,7 +53,7 @@ bool jump_breakpoint_put(struct breakpoint *bp) {
     DEBUG("stub for bp at 0x%08x allocated at 0x%08x", bp->address, stub);
 
     memcpy(stub, &jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
-    g_ops.cache_flush(stub, JUMP_BREAKPOINT_STUB_SIZE);
+    cache_flush(stub, JUMP_BREAKPOINT_STUB_SIZE);
 
     // fill in the required stuff for the stub:
     // - bp_address so that the handler will know which breakpoint was triggered
@@ -69,17 +68,17 @@ bool jump_breakpoint_put(struct breakpoint *bp) {
 
     memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
     *(unsigned int *)bp->address = build_jump(bp->address, (unsigned int)stub);
-    g_ops.cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
+    cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 
     return true;
 }
 
-bool jump_breakpoint_disable(struct breakpoint *bp) {
+bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
     DEBUG("disabling bp at 0x%08x", bp->address);
 
-    g_ops.free(bp->arch_specific.stub);
+    target_free(bp->arch_specific.stub);
     memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);
-    g_ops.cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
+    cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 
     return true;
 }

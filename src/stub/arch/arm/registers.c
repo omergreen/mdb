@@ -2,7 +2,6 @@
 #include "registers.h"
 #include <core/log.h>
 #include <libc/libc.h>
-#include <core/ops.h>
 
 void registers_get_from_stub(struct registers *regs, struct registers_from_stub *regs_stub, unsigned int pc) {
     memcpy(&regs->r0, regs_stub->r0_to_r12, sizeof(regs_stub->r0_to_r12)); // copy r0-r12
@@ -29,7 +28,7 @@ void registers_update_to_stub(struct registers *regs, struct registers_from_stub
 static void print_colored_line(const char *s1, const char *s2, const char *s3, const char *s4, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4) {
 #define STRING_AND_VALUE_FORMAT COLORIZE_FORMAT("%-4s") " 0x%-8x  "
 
-    g_ops.log(STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT "\n", 
+    target_log(STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT STRING_AND_VALUE_FORMAT "\n", 
               COLORIZE_REGISTER_ARG(s1), v1, COLORIZE_REGISTER_ARG(s2), v2, COLORIZE_REGISTER_ARG(s3), v3, COLORIZE_REGISTER_ARG(s4), v4);
 }
 static const char *cpsr_mode_to_string(unsigned int mode) {
@@ -72,7 +71,7 @@ static const char *cpsr_mode_to_string(unsigned int mode) {
 static void print_cpsr(union cpsr *cpsr) {
 #define BOLDIFY_FLAG(value) COLORIZE_ARGS(value ? KBOLD : KDIM)
 
-    g_ops.log(COLORIZE_FORMAT("cpsr") " 0x%-8x  [ " COLORIZE_FORMAT("thumb ") 
+    target_log(COLORIZE_FORMAT("cpsr") " 0x%-8x  [ " COLORIZE_FORMAT("thumb ") 
               COLORIZE_FORMAT("overflow ") COLORIZE_FORMAT("carry ") 
               COLORIZE_FORMAT("zero ") COLORIZE_FORMAT("negative ") "] (%s mode)\n", 
 

@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <core/ops.h>
+#include <libc/libc.h>
 #include "malloc.h"
 
 /* Both the arena list and the free memory list are double linked
@@ -143,7 +143,7 @@ static struct free_arena_header *__free_block(struct free_arena_header *ah)
     return ah;
 }
 
-static void *_malloc(size_t size)
+void *malloc(size_t size)
 {
     struct free_arena_header *fp;
 
@@ -211,7 +211,38 @@ void add_malloc_block(void *buf, size_t size)
     malloc_unlock();
 }
 
-static void _free(void *ptr)
+unsigned int get_malloc_size(void *ptr) {
+    struct free_arena_header *ah = (struct free_arena_header *)((struct arena_header *)ptr - 1);
+
+    return ah->a.size;
+}
+
+void *realloc(void *ptr, size_t size)
+{
+    void *new;
+
+    if (!ptr) {
+        new = malloc(size);
+        if (!new) { goto error; }
+    } else {
+        if (get_malloc_size(ptr) < size) {
+            new = malloc(size);
+            if (!new) { goto error; }
+
+            memcpy(new, ptr, get_malloc_size(ptr));
+
+            free(ptr);
+        } else {
+            new = ptr;
+        }
+    }
+
+    return new;
+error:
+    return NULL;
+}
+
+void free(void *ptr)
 {
     struct free_arena_header *ah;
 
@@ -274,8 +305,5 @@ void malloc_init() {
     __malloc_head.prev_free = &__malloc_head;
 
     set_malloc_locking(NULL, NULL);
-
-    g_ops.malloc = &_malloc;
-    g_ops.free = &_free;
 }
 

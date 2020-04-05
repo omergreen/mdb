@@ -1,8 +1,5 @@
-#include <machine/target/target.h>
-#include <machine/arch/arch.h>
-#include <core/ops.h>
-
-struct ops g_ops;
+#include <arch/interface.h>
+#include <target/interface.h>
 
 extern unsigned long __GOT_OFFSET;
 extern unsigned long __GOT_LENGTH;
@@ -11,25 +8,25 @@ extern unsigned long __START_OFFSET;
 void fix_got();
 
 void do_nabaz() {
-    g_ops.log("in a loop\n");
+    target_log("in a loop\n");
 
     int i = 0;
 
     while (1) {
         if ((i++ & (0x10000000-1)) == 0) {
-            g_ops.log("inside\n");
+            target_log("inside\n");
         }
     };
 }
 
 __attribute__((externally_visible,used,section(".init"))) void _start(void *args) {
     fix_got();
-    init_arch();
+    arch_init();
     target_init(args);
 
     struct breakpoint bp;
-    bp.address = (unsigned int)do_nabaz + 100;
-    g_ops.breakpoint_put(&bp);
+    bp.address = (unsigned int)do_nabaz + 52;
+    arch_jump_breakpoint_put(&bp);
 
     do_nabaz();
 

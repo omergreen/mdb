@@ -3,6 +3,7 @@
  *
  * Internals for the memory allocator
  */
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -46,5 +47,7 @@ typedef void (*malloc_unlock_t)();
 
 void malloc_init();
 void add_malloc_block(void *buf, size_t size);
-static void *_malloc(size_t size);
-static void _free(void *ptr);
+void *malloc(size_t size);
+void *realloc(void *ptr, size_t size);
+void free(void *ptr);
+

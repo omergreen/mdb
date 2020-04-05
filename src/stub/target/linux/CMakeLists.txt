@@ -1,3 +1,6 @@
 set(TARGET_SOURCES "machine/target/syscall.c" "machine/target/libc.c" "machine/target/linux.c")
 
+target_compile_definitions("${PROJECT_NAME}" PUBLIC "-DOVERRIDE_ARCH_CACHE_FLUSH")
+
 target_sources("${PROJECT_NAME}" PUBLIC "${TARGET_SOURCES}")
+

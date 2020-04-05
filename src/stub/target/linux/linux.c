@@ -1,5 +1,4 @@
 #include <libc/libc.h>
-#include <core/ops.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -11,7 +10,7 @@
 
 struct linux_data g_linux_data;
 
-static void cleanup() {
+void target_cleanup() {
     close(g_linux_data.log_fd);
 }
 
@@ -24,7 +23,7 @@ static void init_log() {
     /* } */
 }
 
-static void log(const char *format, ...) {
+void target_log(const char *format, ...) {
     char buffer[1024];
 
     va_list ap;
@@ -41,8 +40,5 @@ void target_init(void *args) {
     malloc_init();
     init_log();
     add_malloc_block(free_space, PAGE_SIZE);
-    g_ops.log = &log;
-    g_ops.cleanup = &cleanup;
-    g_ops.cache_flush = &cache_flush_linux;
 }
 

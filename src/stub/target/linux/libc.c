@@ -30,7 +30,7 @@ int _close(int fd) {
     return syscall(__NR_close, fd);
 }
 
-void cache_flush_linux(void *start, unsigned int length) { // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/clear_cache.c
+void target_cache_flush(void *start, unsigned int length) { // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/clear_cache.c
 #if ARCH == arm
     syscall(__ARM_NR_cacheflush, start, start + length, 0);
 #elif ARCH == mips
@@ -38,5 +38,17 @@ void cache_flush_linux(void *start, unsigned int length) { // https://github.com
 #else
 #error "bassa"
 #endif
+}
+
+void *target_malloc(size_t size) {
+    return malloc(size);
+}
+
+void target_free(void *ptr) {
+    free(ptr);
+}
+
+void *target_realloc(void *ptr, size_t size) {
+    return realloc(ptr, size);
 }
 
