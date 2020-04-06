@@ -1,3 +1,7 @@
+/*
+ * Implements Linux-related libc stuff
+ */
+
 #include <asm/unistd.h>
 #include <sys/syscall.h>
 #include <fcntl.h>

@@ -1,9 +1,12 @@
+/*
+ * Implements Linux-related functions
+ */
+
 #include <libc/libc.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <stdarg.h>
 
-#include "target.h"
 #include "linux.h"
 
 #define PAGE_SIZE 4096

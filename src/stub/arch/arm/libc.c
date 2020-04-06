@@ -1,5 +1,12 @@
+/*
+ * Implements general functions related to the ARM architecture
+ */
+
 #include <target/interface.h>
 
+/*
+ * Return a jump opcode from `from` to `to`
+ */
 unsigned int build_jump(unsigned int from, unsigned int to) {
     return 0xea000000 + (((to - (from + 8)) / 4) & 0xffffff);
 }

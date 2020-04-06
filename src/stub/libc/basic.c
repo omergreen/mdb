@@ -1,3 +1,7 @@
+/*
+ * Implements basic libc functions
+ */
+
 #include <stdint.h>
 #include <string.h>
 

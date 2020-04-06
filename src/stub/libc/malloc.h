@@ -1,11 +1,12 @@
 /*
  * malloc.h
  *
+ * Default memory allocator
+ *
  * Internals for the memory allocator
  */
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
 
 /*

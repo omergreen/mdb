@@ -1,3 +1,7 @@
+/*
+ * Implements the entry point
+ */
+
 #include <arch/interface.h>
 #include <target/interface.h>
 
@@ -26,7 +30,7 @@ __attribute__((used,section(".init"))) void _start(void *args) {
 
     struct breakpoint bp;
     bp.address = (unsigned int)do_nabaz + 52;
-    arch_jump_breakpoint_put(&bp);
+    arch_jump_breakpoint_enable(&bp);
 
     do_nabaz();
 

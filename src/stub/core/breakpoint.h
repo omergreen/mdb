@@ -1,3 +1,7 @@
+/*
+ * The generic breakpoint struct & functions
+ */
+
 #pragma once
 
 #include <stdbool.h>

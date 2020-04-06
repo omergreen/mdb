@@ -1,3 +1,7 @@
+/*
+ * The ARM register set
+ */
+
 #pragma once
 
 #define CPSR_M_USR 0x10 // PL0 - user mode

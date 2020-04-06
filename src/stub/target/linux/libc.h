@@ -1,3 +1,7 @@
+/*
+ * Defines Linux-related libc stuff
+ */
+
 void *mmap2(void *addr, unsigned long len, int prot, int flags, int fildes, signed long off);
 int _open(const char *filename, int flags, ...);
 unsigned int _write(int fd, char *buf, unsigned int length);

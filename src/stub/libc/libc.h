@@ -1,3 +1,7 @@
+/*
+ * Defines general functions, sort of subset of a real libc
+ */
+
 #pragma once
 
 #define TINYPRINTF_OVERRIDE_LIBC 1

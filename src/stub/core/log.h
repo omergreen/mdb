@@ -1,3 +1,7 @@
+/*
+ * Logging functions & colors
+ */
+
 #pragma once
 
 #include <target/interface.h>

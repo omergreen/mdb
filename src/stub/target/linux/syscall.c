@@ -1,3 +1,7 @@
+/*
+ * Implements Linux syscall
+ */
+
 long syscall(long sysnum, long a, long b, long c, long d, long e, long f) {
     register long _r7 __asm__("r7")=(long)(sysnum);
     register long _r5 __asm__("r5")=(long)(f);
