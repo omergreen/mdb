@@ -48,11 +48,13 @@
 #endif
 
 #define ERROR(s, ...) _MESSAGE(s, "ERROR", KRED, ##__VA_ARGS__)
-
+ 
+#define _STRINGIFY(a) #a
+#define STRINGIFY(a) _STRINGIFY(a)
 // TODO: maybe make the debugger quit on assert?
 #define assert(condition) do { \
                               if (condition) { \
-                                  ERROR("assert(" ## condition ## ") failed"); \
+                                  ERROR("assert(" STRINGIFY(condition) ") failed"); \
                               } \
                           } while(0);
 

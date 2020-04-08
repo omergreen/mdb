@@ -5,8 +5,6 @@
  */
 
 #include <stdbool.h>
-#include <stdlib.h>
-#include <assert.h>
 #include <libc/libc.h>
 #include "malloc.h"
 
