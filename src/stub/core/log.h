@@ -6,9 +6,6 @@
 
 #include <target/interface.h>
 
-#define COLORS
-#define DEBUGMODE
-
 #define COLORIZE_FORMAT(format) "%s" format "%s"
 #define COLORIZE_ARGS(color, ...) color, ##__VA_ARGS__, KNRM
 
