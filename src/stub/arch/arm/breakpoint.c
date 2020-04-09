@@ -43,7 +43,7 @@ struct breakpoint global_bp2;
  * and then gives control to the core.
  */
 __attribute__((noreturn)) static void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
-    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
+    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", bp->address, sp);
 
     struct registers_from_stub *regs = (struct registers_from_stub *)sp;
     registers_get_from_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp, bp->address);
@@ -88,7 +88,7 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
         return false;
     }
 
-    DEBUG("stub for bp at 0x%08x allocated at 0x%08x", bp->address, stub);
+    /* DEBUG("stub for bp at 0x%08x allocated at 0x%08x", bp->address, stub); */
 
     memcpy(stub, &jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
     // fill in the required stuff for the stub:
@@ -116,7 +116,7 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
  * Replace the breakpoint at bp->addres with the original code
  */
 bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
-    DEBUG("disabling bp at 0x%08x", bp->address);
+    /* DEBUG("disabling bp at 0x%08x", bp->address); */
 
     target_free(bp->arch_specific.stub);
     memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);

@@ -167,7 +167,9 @@ void *malloc(size_t size)
 
     malloc_unlock();
 
+#ifdef DEBUG_MALLOC
     DEBUG("malloc(%d) = 0x%x", size, result);
+#endif
     return result;
 }
 
@@ -214,7 +216,10 @@ void add_malloc_block(void *buf, size_t size)
 
 unsigned int get_malloc_size(void *ptr) {
     struct free_arena_header *ah = (struct free_arena_header *)((struct arena_header *)ptr - 1);
-    DEBUG("size is %d", ah->a.size);
+
+#ifdef DEBUG_MALLOC
+    DEBUG("old size is %d", ah->a.size);
+#endif
 
     return ah->a.size;
 }
@@ -239,16 +244,20 @@ void *realloc(void *ptr, size_t size)
         }
     }
 
-    return new;
 error:
-    return NULL;
+#ifdef DEBUG_MALLOC
+    DEBUG("realloc(0x%x, %d) = 0x%x", ptr, size, new);
+#endif
+    return new;
 }
 
 void free(void *ptr)
 {
     struct free_arena_header *ah;
 
+#ifdef DEBUG_MALLOC
     DEBUG("free(0x%x)", ptr);
+#endif
 
     if (!ptr)
         return;

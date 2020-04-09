@@ -1,3 +1,7 @@
+/*
+ * This is our own interface to the GDB get_next_pc code, which is implemented in gdb_get_next_pc.*
+ */
+
 #include "get_next_pc.h"
 #include <libc/libc.h>
 #include <arch/interface.h>

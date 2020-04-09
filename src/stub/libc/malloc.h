@@ -9,10 +9,6 @@
 
 #include <stddef.h>
 
-#ifdef DEBUGMODE
-#define DEBUG_MALLOC
-#endif
-
 /*
  * This structure should be a power of two.  This becomes the
  * alignment unit.

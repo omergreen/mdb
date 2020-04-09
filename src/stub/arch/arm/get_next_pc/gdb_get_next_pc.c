@@ -1,3 +1,8 @@
+/*
+ * This (and gdb_get_next_pc.h) was taken almost directly from GDB's source code.
+ * I wrote our own interface to that in get_next_pc.c
+ */
+
 /* Common code for ARM software single stepping support.
 
    Copyright (C) 1988-2020 Free Software Foundation, Inc.
