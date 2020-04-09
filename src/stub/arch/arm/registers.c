@@ -7,8 +7,11 @@ void registers_get_from_stub(struct registers *regs, struct registers_from_stub 
     memcpy(&regs->r0, regs_stub->r0_to_r12, sizeof(regs_stub->r0_to_r12)); // copy r0-r12
     regs->sp = regs_stub->sp;
     regs->lr = regs_stub->lr;
-    regs->pc = pc; // do we need to add 8 to it or something? not sure
+    regs->pc = pc; 
     regs->cpsr.packed = regs_stub->cpsr;
+
+    regs->cpsr.bits.thumb = IS_THUMB_ADDR(pc);
+    regs->pc = UNMAKE_THUMB_ADDR(pc); // do we need to add 8 to it or something? not sure
 }
 
 void registers_update_to_stub(struct registers *regs, struct registers_from_stub *regs_stub) {
@@ -16,6 +19,8 @@ void registers_update_to_stub(struct registers *regs, struct registers_from_stub
     regs_stub->sp = regs->sp;
     regs_stub->lr = regs->lr;
     /* regs_stub->pc = regs->pc; // do we need to add 8 to it or something? not sure */   // pc needs special treatment - argument of jump_breakpoint_epilogue
+
+    regs->cpsr.bits.thumb = 0; // the jump back will fix the thumb bit; we don't want to change it when we pop the flags
     regs_stub->cpsr = regs->cpsr.packed;
 }
 
