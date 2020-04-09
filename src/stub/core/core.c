@@ -31,8 +31,6 @@ void fix_got() {
     unsigned long start = (unsigned long)&_start;
     unsigned long *got = (unsigned long *)(start + (unsigned long)&__GOT_OFFSET); // stackoverflow.com/q/8398755
     for (unsigned int i = 0; i < ((unsigned long)&__GOT_LENGTH) / sizeof(*got); ++i) {
-        if (i == 10)
-            break;
         got[i] += start - (unsigned long)&__START_OFFSET;
     }
 }
