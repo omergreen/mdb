@@ -9,6 +9,10 @@ if(NOT DEFINED ENDIAN OR NOT ENDIAN IN_LIST allowed_endian)
     message(FATAL_ERROR "ENDIAN must be one of ${allowed_endian}")
 endif()
 
+if(NOT DEFINED TOOLCHAIN_PREFIX)
+    message(FATAL_ERROR "You must specify a toolchain with -DTOLCHAIN_PREFIX")
+endif()
+
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
