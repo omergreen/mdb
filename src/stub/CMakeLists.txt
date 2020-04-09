@@ -34,7 +34,9 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
                            $<$<BOOL:${DEBUG}>:DEBUGMODE>
                            $<$<BOOL:${DEBUG_MALLOC}>:DEBUG_MALLOC>)
 
-# add_subdirectory("${PROJECT_SOURCE_DIR}/machine")
+target_compile_options(${PROJECT_NAME} PUBLIC -fno-builtin $<$<BOOL:${DEBUG}>:-ggdb> "-fmacro-prefix-map=${CMAKE_SOURCE_DIR}/=")
+target_link_options(${PROJECT_NAME} PUBLIC -nostdlib -static --entry=_start "-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
+
 include("${PROJECT_SOURCE_DIR}/machine/arch/CMakeLists.txt")
 include("${PROJECT_SOURCE_DIR}/machine/target/CMakeLists.txt")
 
