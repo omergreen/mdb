@@ -24,6 +24,10 @@ unsigned int build_jump(unsigned int from, unsigned int to);
 void cache_flush();
 
 
+#define IS_THUMB_ADDR(addr)    ((addr) & 1)
+#define MAKE_THUMB_ADDR(addr)  ((addr) | 1)
+#define UNMAKE_THUMB_ADDR(addr) ((addr) & ~1)
+
 enum endian {
     BIG,
     LITTLE

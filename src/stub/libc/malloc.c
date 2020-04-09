@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <libc/libc.h>
+#include <core/log.h>
 #include "malloc.h"
 
 /* Both the arena list and the free memory list are double linked
@@ -165,6 +166,8 @@ void *malloc(size_t size)
     }
 
     malloc_unlock();
+
+    DEBUG("malloc(%d) = 0x%x", size, result);
     return result;
 }
 
@@ -211,6 +214,7 @@ void add_malloc_block(void *buf, size_t size)
 
 unsigned int get_malloc_size(void *ptr) {
     struct free_arena_header *ah = (struct free_arena_header *)((struct arena_header *)ptr - 1);
+    DEBUG("size is %d", ah->a.size);
 
     return ah->a.size;
 }
@@ -243,6 +247,8 @@ error:
 void free(void *ptr)
 {
     struct free_arena_header *ah;
+
+    DEBUG("free(0x%x)", ptr);
 
     if (!ptr)
         return;

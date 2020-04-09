@@ -6,6 +6,7 @@
 #include "registers.h"
 #include <core/log.h>
 #include <libc/libc.h>
+#include "get_next_pc/get_next_pc.h"
 
 
 /*
@@ -35,17 +36,35 @@ trampoline:\
     __builtin_unreachable();
 }
 
+struct breakpoint global_bp1;
+struct breakpoint global_bp2;
 /*
  * Called directly from the breakpoint stub, this function parses the stack to get the register state
  * and then gives control to the core.
  */
 __attribute__((noreturn)) static void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
-    target_log("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
+    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x\n", bp->address, sp);
 
     struct registers_from_stub *regs = (struct registers_from_stub *)sp;
     registers_get_from_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp, bp->address);
 
-    registers_print_all(bp);
+    extern void *core_write;
+    if (bp->arch_specific.regs.pc == (unsigned int)&core_write) {
+        registers_print_all(bp);
+        ERROR("going to write \"%s\"", (char *)bp->arch_specific.regs.r1); 
+    }
+
+    pc_list next_pcs = arch_get_next_pc(bp);
+
+    struct breakpoint *next_bp = (bp == &global_bp1 ? &global_bp2 : &global_bp1);
+
+    next_bp->address = *cvector_begin(next_pcs);
+    if (next_pcs == NULL) {
+        ERROR("next_pcs is NULL???");
+    }
+    arch_jump_breakpoint_enable(next_bp);
+
+    cvector_free(next_pcs);
 
     registers_update_to_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp);
     arch_jump_breakpoint_disable(bp);
