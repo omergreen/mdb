@@ -1,7 +1,7 @@
 set(ARCH_SHELLCODE_C_FLAGS -nostdlib -nodefaultlibs -nostartfiles -fno-builtin -fPIE -static -ggdb "-fmacro-prefix-map=${CMAKE_SOURCE_DIR}/=")
 set(ARCH_SHELLCODE_LD_FLAGS ${ARCH_SHELLCODE_C_FLAGS}  --entry=_start "-T${PROJECT_SOURCE_DIR}/machine/arch/linker.ld")
 set(ARCH_SHELLCODE_LINK_LIBRARIES -lgcc)
-file(GLOB ARCH_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.[cS]")
+file(GLOB_RECURSE ARCH_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.[cS]")
 
 set(allowed_endian BIG LITTLE BE8)
 if(NOT DEFINED ENDIAN OR NOT ENDIAN IN_LIST allowed_endian)

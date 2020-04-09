@@ -50,7 +50,7 @@
 #define STRINGIFY(a) _STRINGIFY(a)
 // TODO: maybe make the debugger quit on assert?
 #define assert(condition) do { \
-                              if (condition) { \
+                              if (!condition) { \
                                   ERROR("assert(" STRINGIFY(condition) ") failed"); \
                               } \
                           } while(0);
