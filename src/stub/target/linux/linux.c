@@ -17,7 +17,7 @@
 struct linux_data g_linux_data;
 
 void target_cleanup() {
-    close(g_linux_data.log_fd);
+    /* close(g_linux_data.log_fd); */
 }
 
 static void init_log() {

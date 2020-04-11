@@ -14,7 +14,7 @@ struct registers_from_stub {
    unsigned int lr;
 };
 
-void registers_print_all(struct breakpoint *bp);
+void registers_print_all();
 void registers_get_from_stub(struct registers *regs, struct registers_from_stub *regs_stub, unsigned int pc);
 void registers_update_to_stub(struct registers *regs, struct registers_from_stub *regs_stub);
 

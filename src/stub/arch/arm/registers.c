@@ -2,6 +2,7 @@
 #include "registers.h"
 #include <core/log.h>
 #include <libc/libc.h>
+#include <core/state.h>
 
 void registers_get_from_stub(struct registers *regs, struct registers_from_stub *regs_stub, unsigned int pc) {
     memcpy(&regs->r0, regs_stub->r0_to_r12, sizeof(regs_stub->r0_to_r12)); // copy r0-r12
@@ -84,11 +85,11 @@ static void print_cpsr(union cpsr *cpsr) {
               BOLDIFY_FLAG(cpsr->bits.overflow), BOLDIFY_FLAG(cpsr->bits.carry), 
               BOLDIFY_FLAG(cpsr->bits.zero), BOLDIFY_FLAG(cpsr->bits.negative), cpsr_mode_to_string(cpsr->bits.mode));
 }
-void registers_print_all(struct breakpoint *bp) {
-    print_colored_line("r0", "r1", "r2", "r3", bp->arch_specific.regs.r0, bp->arch_specific.regs.r1, bp->arch_specific.regs.r2, bp->arch_specific.regs.r3);
-    print_colored_line("r4", "r5", "r6", "r7", bp->arch_specific.regs.r4, bp->arch_specific.regs.r5, bp->arch_specific.regs.r6, bp->arch_specific.regs.r7);
-    print_colored_line("r8", "r9", "r10", "r11", bp->arch_specific.regs.r8, bp->arch_specific.regs.r9, bp->arch_specific.regs.r10, bp->arch_specific.regs.r11);
-    print_colored_line("r12", "sp", "lr", "pc", bp->arch_specific.regs.r12, bp->arch_specific.regs.sp, bp->arch_specific.regs.lr, bp->arch_specific.regs.pc);
-    print_cpsr(&bp->arch_specific.regs.cpsr);
+void registers_print_all() {
+    print_colored_line("r0", "r1", "r2", "r3", g_state.regs.r0, g_state.regs.r1, g_state.regs.r2, g_state.regs.r3);
+    print_colored_line("r4", "r5", "r6", "r7", g_state.regs.r4, g_state.regs.r5, g_state.regs.r6, g_state.regs.r7);
+    print_colored_line("r8", "r9", "r10", "r11", g_state.regs.r8, g_state.regs.r9, g_state.regs.r10, g_state.regs.r11);
+    print_colored_line("r12", "sp", "lr", "pc", g_state.regs.r12, g_state.regs.sp, g_state.regs.lr, g_state.regs.pc);
+    print_cpsr(&g_state.regs.cpsr);
 }
 

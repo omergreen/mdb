@@ -6,6 +6,5 @@
 struct breakpoint_arch_specific { 
     void *stub;
     unsigned char original_data[BREAKPOINT_LENGTH];
-    struct registers regs;
 };
 

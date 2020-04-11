@@ -6,6 +6,7 @@
 #include "registers.h"
 #include <core/log.h>
 #include <libc/libc.h>
+#include <core/state.h>
 #include "get_next_pc/get_next_pc.h"
 
 
@@ -46,28 +47,29 @@ __attribute__((noreturn)) static void jump_breakpoint_handler(struct breakpoint 
     DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", bp->address, sp);
 
     struct registers_from_stub *regs = (struct registers_from_stub *)sp;
-    registers_get_from_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp, bp->address);
+    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, bp->address);
 
-    extern void *core_write;
-    if (bp->arch_specific.regs.pc == (unsigned int)&core_write) {
-        registers_print_all(bp);
-        ERROR("going to write \"%s\"", (char *)bp->arch_specific.regs.r1); 
-    }
+    breakpoint_handler(bp->address);
 
-    pc_list next_pcs = arch_get_next_pc(bp);
+    /* extern void *core_write; */
+    /* if (g_state.regs.pc == (unsigned int)&core_write) { */
+    /*     registers_print_all(); */
+    /*     ERROR("going to write \"%s\"", (char *)g_state.regs.r1); */ 
+    /* } */
 
-    struct breakpoint *next_bp = (bp == &global_bp1 ? &global_bp2 : &global_bp1);
+    /* pc_list next_pcs = arch_get_next_pc(bp); */
 
-    next_bp->address = *cvector_begin(next_pcs);
-    if (next_pcs == NULL) {
-        ERROR("next_pcs is NULL???");
-    }
-    arch_jump_breakpoint_enable(next_bp);
+    /* struct breakpoint *next_bp = (bp == &global_bp1 ? &global_bp2 : &global_bp1); */
 
-    cvector_free(next_pcs);
+    /* next_bp->address = *cvector_begin(next_pcs); */
+    /* if (next_pcs == NULL) { */
+    /*     ERROR("next_pcs is NULL???"); */
+    /* } */
+    /* arch_jump_breakpoint_enable(next_bp); */
 
-    registers_update_to_stub(&bp->arch_specific.regs, (struct registers_from_stub *)sp);
-    arch_jump_breakpoint_disable(bp);
+    /* cvector_free(next_pcs); */
+
+    registers_update_to_stub(&g_state.regs, (struct registers_from_stub *)sp);
     jump_breakpoint_epilogue(bp->address, sp);
 }
 

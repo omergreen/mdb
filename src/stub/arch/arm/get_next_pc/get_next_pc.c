@@ -5,6 +5,7 @@
 #include "get_next_pc.h"
 #include <libc/libc.h>
 #include <arch/interface.h>
+#include <core/state.h>
 
 static ULONGEST read_mem_uint(CORE_ADDR memaddr, int len, int byte_order) {
     unsigned short val16;
@@ -53,8 +54,8 @@ pc_list arch_get_next_pc(struct breakpoint *bp) {
    struct arm_get_next_pcs_ops ops = {.read_mem_uint=read_mem_uint, .syscall_next_pc=syscall_next_pc, .addr_bits_remove=addr_bits_remove, .fixup=NULL};
    struct arm_get_next_pcs self;
 
-   arm_get_next_pcs_ctor(&self, &ops, DATA_ENDIAN, CODE_ENDIAN, 0, &bp->arch_specific.regs);
-   pc_list next_pcs = arm_get_next_pcs(&self, bp->arch_specific.regs.cpsr.bits.thumb);
+   arm_get_next_pcs_ctor(&self, &ops, DATA_ENDIAN, CODE_ENDIAN, 0, &g_state.regs);
+   pc_list next_pcs = arm_get_next_pcs(&self, g_state.regs.cpsr.bits.thumb);
 
     // TODO: fix this for later
    arch_jump_breakpoint_enable(bp);
