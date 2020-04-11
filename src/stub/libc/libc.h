@@ -20,6 +20,9 @@ size_t strlen(const char *s);
 char *strcpy(char *dst, const char *src);
 char *strchr(const char *s, int c);
 char *strcat(char *dst, const char *src);
+int memcmp(const void *s1, const void *s2, size_t n);
+int strcmp(const char *s1, const char *s2);
+int strncmp(const char *s1, const char *s2, size_t n);
 
 unsigned int htonl(unsigned int hostlong);
 unsigned short htons(unsigned short hostshort);
