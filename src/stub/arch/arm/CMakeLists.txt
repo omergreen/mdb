@@ -21,7 +21,7 @@ set(CMAKE_ASM_COMPILER ${TOOLCHAIN_PREFIX}gcc)
 set(OBJCOPY ${TOOLCHAIN_PREFIX}objcopy)
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_C_FLAGS})
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${ENDIAN}_ENDIAN)
+target_compile_definitions(${PROJECT_NAME} PUBLIC ARM_${ENDIAN}_ENDIAN)
 
 target_link_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_LD_FLAGS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_LINK_LIBRARIES})

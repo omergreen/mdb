@@ -6,6 +6,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <arpa/inet.h>
+#include <core/log.h>
+#include <target/interface.h>
 
 #include "linux.h"
 

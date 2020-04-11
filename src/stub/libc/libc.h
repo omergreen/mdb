@@ -21,6 +21,11 @@ char *strcpy(char *dst, const char *src);
 char *strchr(const char *s, int c);
 char *strcat(char *dst, const char *src);
 
+unsigned int htonl(unsigned int hostlong);
+unsigned short htons(unsigned short hostshort);
+#define ntohl htonl
+#define ntohs htons
+
 #ifdef OVERRIDE_ARCH_CACHE_FLUSH
 #define cache_flush target_cache_flush
 #else

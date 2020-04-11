@@ -28,22 +28,20 @@ void cache_flush();
 #define MAKE_THUMB_ADDR(addr)  ((addr) | 1)
 #define UNMAKE_THUMB_ADDR(addr) ((addr) & ~1)
 
-enum endian {
-    BIG,
-    LITTLE
-};
+#define ENDIAN_BIG (0)
+#define ENDIAN_LITTLE (1)
 
-#ifdef BIG_ENDIAN
-    #define DATA_ENDIAN (LITTLE)
-    #define CODE_ENDIAN (LITTLE)
+#ifdef ARM_BIG_ENDIAN
+    #define DATA_ENDIAN ENDIAN_BIG
+    #define CODE_ENDIAN ENDIAN_BIG
 #endif
-#ifdef LITTLE_ENDIAN
-    #define DATA_ENDIAN (BIG)
-    #define CODE_ENDIAN (BIG)
+#ifdef ARM_LITTLE_ENDIAN
+    #define DATA_ENDIAN ENDIAN_LITTLE
+    #define CODE_ENDIAN ENDIAN_LITTLE
 #endif
-#ifdef BE8_ENDIAN
-    #define DATA_ENDIAN (BIG)
-    #define CODE_ENDIAN (LITTLE)
+#ifdef ARM_BE8_ENDIAN
+    #define DATA_ENDIAN ENDIAN_BIG
+    #define CODE_ENDIAN ENDIAN_LITTLE
 #endif
 #ifndef DATA_ENDIAN
     #error "no endianness"

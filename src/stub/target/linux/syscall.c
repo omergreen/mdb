@@ -2,6 +2,8 @@
  * Implements Linux syscall
  */
 
+#include "libc.h"
+
 long syscall(long sysnum, long a, long b, long c, long d, long e, long f) {
     register long _r7 __asm__("r7")=(long)(sysnum);
     register long _r5 __asm__("r5")=(long)(f);
@@ -17,8 +19,9 @@ long syscall(long sysnum, long a, long b, long c, long d, long e, long f) {
             "r"(_r4), "r"(_r5), "r"(_r7)
             : "memory");
     if(_r0 >=(unsigned long) -4095) {
-        long err = _r0;
+        errno = -_r0;
         _r0=(unsigned long) -1;
     }
     return (long) _r0;
 }
+

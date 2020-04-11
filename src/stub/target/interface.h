@@ -10,8 +10,8 @@
 
 void target_cache_flush(void *start, unsigned int length);
 
-unsigned int target_recv(char *output, unsigned int legnth);
-unsigned int target_send(char *data, unsigned int legnth);
+unsigned int target_recv(char *output, unsigned int length);
+unsigned int target_send(const char *data, unsigned int length);
 void target_log(const char *format, ...);
 
 void *target_malloc(unsigned int size);
