@@ -31,9 +31,9 @@
 
 struct arm_get_next_pcs;
 
-typedef unsigned long long CORE_ADDR;
-typedef long long LONGEST;
-typedef unsigned long long ULONGEST;
+typedef unsigned long CORE_ADDR; // changed this to long instead of long long since we don't deal with 64 bit
+typedef long LONGEST;
+typedef unsigned long ULONGEST;
 #define CORE_ADDR_MAX (~ (CORE_ADDR) 0)
 
 

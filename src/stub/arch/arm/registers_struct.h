@@ -56,3 +56,5 @@ struct registers {
     union cpsr cpsr;
 };
 
+#define REGISTERS_LENGTH (17)
+

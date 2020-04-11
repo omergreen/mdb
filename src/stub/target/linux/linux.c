@@ -40,11 +40,64 @@ void target_log(const char *format, ...) {
     write(g_linux_data.log_fd, buffer, strlen(buffer) + 1);
 }
 
+void init_gdb() {
+    g_linux_data.gdb_fd = -1;
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        perror("unable to create gdb socket");
+        return;
+    }
+
+    struct sockaddr_in sa = {.sin_family = AF_INET, .sin_port = htons(1337), .sin_addr = 0};
+    if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
+        perror("unable to bind gdb socket");
+        close(sock);
+        return;
+    }
+
+    if (listen(sock, 1) < 0) {
+        perror("unable to listen gdb socket");
+        close(sock);
+        return;
+    }
+
+    socklen_t sa_size = sizeof(sa);
+    g_linux_data.gdb_fd = accept(sock, (struct sockaddr *)&sa, &sa_size);
+    if (g_linux_data.gdb_fd == -1) {
+        perror("unable to accept gdb socket");
+        close(sock);
+        return;
+    }
+
+    DEBUG("got connection from %d.%d.%d.%d:%d", sa.sin_addr.s_addr >> 24, (sa.sin_addr.s_addr >> 16) & 0xff, (sa.sin_addr.s_addr >> 8) & 0xff, sa.sin_addr.s_addr & 0xff, ntohs(sa.sin_port));
+}
+
+unsigned int target_recv(char *output, unsigned int length) {
+    if (g_linux_data.gdb_fd == -1) {
+        ERROR("gdb connection down");
+        return -1;
+    }
+
+    return read(g_linux_data.gdb_fd, output, length);
+}
+
+unsigned int target_send(const char *data, unsigned int length) { 
+    if (g_linux_data.gdb_fd == -1) {
+        ERROR("gdb connection down");
+        return -1;
+    }
+
+    return write(g_linux_data.gdb_fd, data, length);
+}
+
 void target_init(void *args) {
     char *free_space = (char *)mmap2(0, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0);
     /* free_space[PAGE_SIZE * 2] = 0; */
     malloc_init();
     init_log();
+    init_gdb();
+
     add_malloc_block(free_space, PAGE_SIZE);
 }
 
