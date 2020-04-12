@@ -8,10 +8,8 @@ set(allowed_endian BIG LITTLE BE8)
 if(NOT DEFINED ENDIAN OR NOT ENDIAN IN_LIST allowed_endian)
     message(FATAL_ERROR "ENDIAN must be one of ${allowed_endian}")
 endif()
-
-if(NOT DEFINED TOOLCHAIN_PREFIX)
-    message(FATAL_ERROR "You must specify a toolchain with -DTOLCHAIN_PREFIX")
-endif()
+set(COMPILER_ENDIAN_FLAG $<$<STREQUAL:${ENDIAN},BIG>:-mbig-endian> $<$<STREQUAL:${ENDIAN},LITTLE>:-mlittle-endian> $<$<STREQUAL:${ENDIAN},BE8>:-mbig-endian -mbe8>)
+set(LINKER_ENDIAN_FLAG $<$<STREQUAL:${ENDIAN},BIG>:-EB> $<$<STREQUAL:${ENDIAN},LITTLE>:-LE> $<$<STREQUAL:${ENDIAN},BE8>:-EB --be8>)
 
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
@@ -20,10 +18,10 @@ set(CMAKE_C_COMPILER ${TOOLCHAIN_PREFIX}gcc)
 set(CMAKE_ASM_COMPILER ${TOOLCHAIN_PREFIX}gcc)
 set(OBJCOPY ${TOOLCHAIN_PREFIX}objcopy)
 
-target_compile_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_C_FLAGS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_C_FLAGS} ${COMPILER_ENDIAN_FLAG})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ARM_${ENDIAN}_ENDIAN)
 
-target_link_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_LD_FLAGS})
+target_link_options(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_LD_FLAGS} ${COMPILER_ENDIAN_FLAG})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${ARCH_SHELLCODE_LINK_LIBRARIES})
 target_sources(${PROJECT_NAME} PUBLIC ${ARCH_SOURCES})
 

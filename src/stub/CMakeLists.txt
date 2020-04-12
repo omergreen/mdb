@@ -43,14 +43,20 @@ target_link_options(${PROJECT_NAME} PUBLIC -nostdlib -static --entry=_start "-T$
 include("${PROJECT_SOURCE_DIR}/machine/arch/CMakeLists.txt")
 include("${PROJECT_SOURCE_DIR}/machine/target/CMakeLists.txt")
 
+if(NOT DEFINED LINKER_ENDIAN_FLAG)
+    message(FATAL_ERROR "arch didn't define LINKER_ENDIAN_FLAG")
+endif()
+
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_NAME}.bin)
 add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME}.tmp)
 
 
 # add gdb target xml
+message(${LINKER_ENDIAN_FLAG})
 add_custom_command(OUTPUT gdb_target_description.xml.o
-                   COMMAND ${TOOLCHAIN_PREFIX}ld -r -b binary -o "${PROJECT_BINARY_DIR}/gdb_target_description.xml.o" gdb_target_description.xml
+                   COMMAND ${TOOLCHAIN_PREFIX}ld "${LINKER_ENDIAN_FLAG}" -r -b binary -o "${PROJECT_BINARY_DIR}/gdb_target_description.xml.o" gdb_target_description.xml
                    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/machine/arch"
+                   COMMAND_EXPAND_LISTS # because of LINKER_ENDIAN_FLAG
                    DEPENDS "${CMAKE_SOURCE_DIR}/machine/arch/gdb_target_description.xml")
 target_sources(${PROJECT_NAME} PUBLIC gdb_target_description.xml.o)
 
