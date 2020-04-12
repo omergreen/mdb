@@ -26,6 +26,9 @@ include_directories("${PROJECT_SOURCE_DIR}")
 
 # general sources are everything under core and libc
 file(GLOB_RECURSE STUB_SOURCES core/*.c libc/*.c)
+
+# we finished setting up, start describing the executable
+
 add_executable(${PROJECT_NAME} ${STUB_SOURCES})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
@@ -42,4 +45,12 @@ include("${PROJECT_SOURCE_DIR}/machine/target/CMakeLists.txt")
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_NAME}.bin)
 add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME}.tmp)
+
+
+# add gdb target xml
+add_custom_command(OUTPUT gdb_target_description.xml.o
+                   COMMAND ${TOOLCHAIN_PREFIX}ld -r -b binary -o "${PROJECT_BINARY_DIR}/gdb_target_description.xml.o" gdb_target_description.xml
+                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/machine/arch"
+                   DEPENDS "${CMAKE_SOURCE_DIR}/machine/arch/gdb_target_description.xml")
+target_sources(${PROJECT_NAME} PUBLIC gdb_target_description.xml.o)
 

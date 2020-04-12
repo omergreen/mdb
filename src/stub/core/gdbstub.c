@@ -64,7 +64,7 @@ static int dbg_enc_bin(char *buf, size_t buf_len, const char *data, size_t data_
 static int dbg_dec_bin(const char *buf, size_t buf_len, char *data, size_t data_len);
 
 /* Packet creation helpers */
-static int dbg_send_ok_packet(char *buf, size_t buf_len);
+static int dbg_send_ok_packet();
 static int dbg_send_conmsg_packet(char *buf, size_t buf_len, const char *msg);
 static int dbg_send_signal_packet(char *buf, size_t buf_len, char signal);
 static int dbg_send_error_packet(char *buf, size_t buf_len, char error);
@@ -590,7 +590,7 @@ static int dbg_mem_write(const char *buf, size_t buf_len, address addr, size_t l
 /*
  * Send OK packet
  */
-static int dbg_send_ok_packet(char *buf, size_t buf_len)
+static int dbg_send_ok_packet()
 {
 	return dbg_send_packet("OK", 2);
 }
@@ -679,6 +679,31 @@ static int dbg_sys_putchar(int ch) {
         ERROR("can't putchar");
         return EOF;
     }
+}
+
+bool starts_with_token(char *s1, char *token) {
+    return strncmp(s1, token, strlen(token)) == 0;
+}
+
+extern char target_xml_start[] asm("_binary_gdb_target_description_xml_start");
+extern char target_xml_end[] asm("_binary_gdb_target_description_xml_end");
+bool send_target_xml(int offset, int length) {
+    int xml_length = target_xml_end - target_xml_start;
+    if (offset >= xml_length) {
+        dbg_send_packet("l", 1);
+        return true;
+    }
+
+    if (offset + length > xml_length) {
+        length = xml_length - offset;
+    }
+
+    char packet[1 + length]; // don't care about vulnerabilities
+    packet[0] = 'm';
+    memcpy(packet + 1, target_xml_start, length);
+    
+    dbg_send_packet(packet, sizeof(packet));
+    return true;
 }
 
 /*****************************************************************************
@@ -771,7 +796,7 @@ int gdbstub()
 			if (status == EOF) {
 				goto error;
 			}
-			dbg_send_ok_packet(pkt_buf, sizeof(pkt_buf));
+			dbg_send_ok_packet();
 			break;
 
 		/*
@@ -813,7 +838,7 @@ int gdbstub()
 					goto error;
 				}
 			}
-			dbg_send_ok_packet(pkt_buf, sizeof(pkt_buf));
+			dbg_send_ok_packet();
 			break;
 		
 		/*
@@ -852,7 +877,7 @@ int gdbstub()
 			if (status == EOF) {
 				goto error;
 			}
-			dbg_send_ok_packet(pkt_buf, sizeof(pkt_buf));
+			dbg_send_ok_packet();
 			break;
 
 		/*
@@ -872,7 +897,7 @@ int gdbstub()
 			if (status == EOF) {
 				goto error;
 			}
-			dbg_send_ok_packet(pkt_buf, sizeof(pkt_buf));
+			dbg_send_ok_packet();
 			break;
 
 		/* 
@@ -892,6 +917,53 @@ int gdbstub()
 		case '?':
 			dbg_send_signal_packet(pkt_buf, sizeof(pkt_buf), signum);
 			break;
+
+        // From here, our own stuff
+        
+        case 'q':
+            if (starts_with_token(pkt_buf + 1, "Supported")) {
+                // throw out the packet for now, but answer that we support target description
+                char packet[] = "PacketSize=1000;qXfer:features:read+"; // copied from qemu's response
+                dbg_send_packet(packet, strlen(packet));
+            }
+            else if (starts_with_token(pkt_buf + 1, "Xfer:features:read:target.xml:")) {
+                ptr_next += strlen("qXfer:features:read:target.xml:");
+                int xml_offset, xml_length;
+                token_expect_integer_arg(xml_offset);
+                token_expect_seperator(',')
+                token_expect_integer_arg(xml_length);
+                if (!send_target_xml(xml_offset, xml_length)) {
+                    goto error;
+                }
+            }
+            else if (starts_with_token(pkt_buf + 1, "Attached")) {
+                dbg_send_packet("0", 1); // attached to existing process
+            }
+            else if (starts_with_token(pkt_buf + 1, "fThreadInfo")) {
+                dbg_send_packet("m00", 3); // send thread id as 0
+            }
+            else if (starts_with_token(pkt_buf + 1, "sThreadInfo")) {
+                dbg_send_packet("l", 1); // we don't have anymore thread info to send
+            }
+            else if (pkt_buf[1] == 'C') { // Return the current thread ID.
+                dbg_send_packet("QC00", 4);
+            }
+            else {
+                // unknown query
+                dbg_send_packet(NULL, 0);
+            }
+            break;
+
+        case 'H': // Set thread for subsequent operations
+            dbg_send_ok_packet();
+            break;
+
+        case 'Z': // set breakpoint
+            break;
+
+        case 'z': // unset breakpoint
+            break;
+
 
 		/*
 		 * Unsupported Command
