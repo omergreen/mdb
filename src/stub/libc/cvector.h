@@ -8,7 +8,6 @@
 
 #include <stddef.h> /* for size_t */
 #include <core/log.h>
-#include <libc/libc.h>
 
 /**
  * @brief cvector_vector_type - The vector type used in this library  
@@ -186,4 +185,6 @@
 	} while (0)
 
 #endif /* CVECTOR_LOGARITHMIC_GROWTH */
+
+#include <libc/libc.h> // move this to the end to eliminate reference problems
 
