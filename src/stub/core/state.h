@@ -9,15 +9,15 @@
 #include <libc/cvector.h>
 
 enum state_enum {
-    STATE_DEFAULT,
-    STATE_REENABLE_BREAKPOINT, // in case of software breakpoints, if we want to keep the current bp enabled
-                               // we need to put a temporary bp on the next opcode, and then reenable the original one
+    STATE_CONTINUE,
+    STATE_SINGLE_STEP
 };
 
 struct state {
     struct registers regs;
     cvector_vector_type(struct breakpoint) breakpoints;
     enum state_enum state;
+    unsigned int previous_pc_breakpoint;
 };
 
 extern struct state g_state;

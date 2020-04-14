@@ -13,5 +13,5 @@ enum action {
 /*
  * Entry point into the "core" of the debugger (for example, gdb interface)
  */
-void core_loop(struct breakpoint *bp);
+void core_loop();
 

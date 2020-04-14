@@ -2,9 +2,9 @@
  * This is our own interface to the GDB get_next_pc code, which is implemented in gdb_get_next_pc.*
  */
 
-#include "get_next_pc.h"
 #include <libc/libc.h>
 #include <arch/interface.h>
+#include "get_next_pc.h"
 #include <core/state.h>
 
 static ULONGEST read_mem_uint(CORE_ADDR memaddr, int len, int byte_order) {
@@ -46,10 +46,9 @@ static CORE_ADDR addr_bits_remove(struct arm_get_next_pcs *self, CORE_ADDR val) 
 }
 
 // TODO: should use state
-pc_list arch_get_next_pc(struct breakpoint *bp) {
+pc_list arch_get_next_pc() {
     // we start by disabling all the breakpoints so they won't interfere when we try to read the memory
-    // TODO: fix this for later
-    arch_jump_breakpoint_disable(bp);
+    breakpoint_disable_all_temporarily();
 
    struct arm_get_next_pcs_ops ops = {.read_mem_uint=read_mem_uint, .syscall_next_pc=syscall_next_pc, .addr_bits_remove=addr_bits_remove, .fixup=NULL};
    struct arm_get_next_pcs self;
@@ -57,8 +56,7 @@ pc_list arch_get_next_pc(struct breakpoint *bp) {
    arm_get_next_pcs_ctor(&self, &ops, DATA_ENDIAN, CODE_ENDIAN, 0, &g_state.regs);
    pc_list next_pcs = arm_get_next_pcs(&self, g_state.regs.cpsr.bits.thumb);
 
-    // TODO: fix this for later
-   arch_jump_breakpoint_enable(bp);
+   breakpoint_restore_all_temporarily();
    return next_pcs;
 }
 

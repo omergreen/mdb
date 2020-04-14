@@ -51,26 +51,8 @@ __attribute__((noreturn)) static void jump_breakpoint_handler(struct breakpoint 
 
     breakpoint_handler(bp->address);
 
-    /* extern void *core_write; */
-    /* if (g_state.regs.pc == (unsigned int)&core_write) { */
-    /*     registers_print_all(); */
-    /*     ERROR("going to write \"%s\"", (char *)g_state.regs.r1); */ 
-    /* } */
-
-    /* pc_list next_pcs = arch_get_next_pc(bp); */
-
-    /* struct breakpoint *next_bp = (bp == &global_bp1 ? &global_bp2 : &global_bp1); */
-
-    /* next_bp->address = *cvector_begin(next_pcs); */
-    /* if (next_pcs == NULL) { */
-    /*     ERROR("next_pcs is NULL???"); */
-    /* } */
-    /* arch_jump_breakpoint_enable(next_bp); */
-
-    /* cvector_free(next_pcs); */
-
     registers_update_to_stub(&g_state.regs, (struct registers_from_stub *)sp);
-    jump_breakpoint_epilogue(bp->address, sp);
+    jump_breakpoint_epilogue(g_state.regs.pc, sp); // TODO: store the PC instead of address of the breakpoint struct
 }
 
 static void fill_offset(void *stub, int offset, void *value) {
@@ -123,6 +105,8 @@ bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
     target_free(bp->arch_specific.stub);
     memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
+
+    bp->arch_specific.stub = NULL;
 
     return true;
 }

@@ -7,15 +7,10 @@
 #include <stdbool.h>
 #include <machine/arch/breakpoint_arch_specific_struct.h>
 
-enum breakpoint_type {
-    USER,
-    TEMPORARY // we remove any breakpoint marked as "temporary" on the next time we're up
-};
-
 struct breakpoint {
     unsigned int address;
     bool enabled;
-    enum breakpoint_type type;
+    bool temporary;
     struct breakpoint_arch_specific arch_specific;
 };
 
@@ -25,13 +20,24 @@ struct breakpoint {
 // Entry point from the arch specific breakpoint handler
 void breakpoint_handler(unsigned int address);
 
-// Add a new breakpoint, without enabling it
-void breakpoint_add(unsigned int address, enum breakpoint_type type);
+// Add a new breakpoint at `address`, without enabling it
+void breakpoint_add(unsigned int address, bool temporary);
 
-// Enable an existing disabled breakpoint
-void breakpoint_enable(unsigned int address);
+// Remove breakpoint at `address`
+void breakpoint_remove(unsigned int address);
 
-// Disable an existing enabled breakpoint
-void breakpoint_disable(unsigned int address);
+// Returns if a breakpoint is enabled at `address`
+bool breakpoint_exists(unsigned int address);
 
+/* // Enable an existing disabled breakpoint */
+/* void breakpoint_enable(unsigned int address, bool temporary); */
+
+/* // Disable an existing enabled breakpoint */
+/* void breakpoint_disable(unsigned int address, bool temporary); */
+
+void breakpoint_disable_all_temporarily();
+void breakpoint_restore_all_temporarily();
+
+// Flip all breakpoints marked with flip_on_next_stop, erasing the disabled
+void breakpoint_remove_temporay();
 

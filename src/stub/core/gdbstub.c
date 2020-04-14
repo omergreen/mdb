@@ -27,6 +27,7 @@
 #include <machine/arch/registers_struct.h>
 #include <stddef.h>
 #include <core/core.h>
+#include "breakpoint.h"
 
 /*****************************************************************************
  * Types
@@ -77,6 +78,9 @@ static int dbg_step(void);
 
 static int dbg_sys_getc();
 static int dbg_sys_putchar(int ch);
+
+
+bool no_ack_mode = false;
 
 /*****************************************************************************
  * String Processing Helper Functions
@@ -212,6 +216,8 @@ static int dbg_is_printable_char(char ch)
 static int dbg_recv_ack(void)
 {
 	int response;
+
+    if (no_ack_mode) return 0;
 
 	/* Wait for packet ack */
 	switch (response = dbg_sys_getc()) {
@@ -370,12 +376,16 @@ static int dbg_recv_packet(char *pkt_buf, size_t pkt_buf_len, size_t *pkt_len)
 	if (actual_csum != expected_csum) {
 		/* Send packet nack */
 		DEBUG("received packet with bad checksum");
-		dbg_sys_putchar('-');
+        if (!no_ack_mode) {
+            dbg_sys_putchar('-');
+        }
 		return EOF;
 	}
 
 	/* Send packet ack */
-	dbg_sys_putchar('+');
+    if (!no_ack_mode) {
+        dbg_sys_putchar('+');
+    }
 	return 0;
 }
 
@@ -722,7 +732,7 @@ int gdbstub()
 	size_t      pkt_len;
 	const char *ptr_next;
 
-    int signum = 0; // TODO: ??
+    int signum = 5; // TODO: ??
 
 	dbg_send_signal_packet(pkt_buf, sizeof(pkt_buf), signum);
 
@@ -923,7 +933,7 @@ int gdbstub()
         case 'q':
             if (starts_with_token(pkt_buf + 1, "Supported")) {
                 // throw out the packet for now, but answer that we support target description
-                char packet[] = "PacketSize=1000;qXfer:features:read+"; // copied from qemu's response
+                char packet[] = "PacketSize=1000;qXfer:features:read+;QStartNoAckMode+"; // copied from qemu's response
                 dbg_send_packet(packet, strlen(packet));
             }
             else if (starts_with_token(pkt_buf + 1, "Xfer:features:read:target.xml:")) {
@@ -954,15 +964,81 @@ int gdbstub()
             }
             break;
 
+        case 'Q':
+            if (starts_with_token(pkt_buf + 1, "StartNoAckMode")) {
+                dbg_send_ok_packet();
+                no_ack_mode = true;
+            }
+            else {
+                dbg_send_packet(NULL, 0);
+            }
+            break;
+
+        /* case 'v': */
+        /*     if (starts_with_token(pkt_buf + 1, "Cont")) { */
+        /*         if (pkt_buf[5] == '?') { */
+        /*             // answer that we support c and s */
+        /*             char packet[] = "vCont;c;s"; */
+        /*             dbg_send_packet(packet, strlen(packet)); */
+        /*         } */
+        /*         else if (pkt_buf[5] == ';') { */
+
+        /*         } */
+        /*         else { */
+        /*             dbg_send_error_packet(pkt_buf, sizeof(pkt_buf), 1); */
+        /*         } */
+        /*     } */
+        /*     else { */
+        /*         dbg_send_packet(NULL, 0); */
+        /*     } */
+        /*     break; */
+
         case 'H': // Set thread for subsequent operations
             dbg_send_ok_packet();
             break;
 
         case 'Z': // set breakpoint
-            break;
-
         case 'z': // unset breakpoint
+        {
+            int type;
+            unsigned int addr;
+            int kind;
+
+            ptr_next += 1;
+			token_expect_integer_arg(type);
+			token_expect_seperator(',');
+			token_expect_integer_arg(addr);
+			token_expect_seperator(',');
+			token_expect_integer_arg(kind);
+
+            if (type != 0) {
+                dbg_send_packet(NULL, 0);
+            }
+            if (kind != 4) {
+                dbg_send_packet(NULL, 0);
+            }
+
+            if (pkt_buf[0] == 'Z') {
+                if (breakpoint_exists(addr)) {
+                    dbg_send_error_packet(pkt_buf, sizeof(pkt_buf), 1);
+                }
+                else {
+                    breakpoint_add(addr, false);
+                }
+            }
+            else {
+                if (!breakpoint_exists(addr)) {
+                    dbg_send_error_packet(pkt_buf, sizeof(pkt_buf), 1);
+                }
+                else {
+                    breakpoint_remove(addr);
+                }
+            }
+
+            dbg_send_ok_packet();
+
             break;
+        }
 
 
 		/*

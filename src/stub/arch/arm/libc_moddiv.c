@@ -1,3 +1,7 @@
+/*
+ * Helper functions for / and % operations
+ */
+
 #include <stdint.h>
 #include <core/log.h>
 

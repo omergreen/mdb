@@ -3,6 +3,7 @@
  */
 
 #include <target/interface.h>
+#include "libc.h"
 
 unsigned int convert_code_data_32(unsigned int val) {
     unsigned int swapped;
