@@ -149,6 +149,8 @@ void *malloc(size_t size)
     if (size == 0)
         return NULL;
 
+    size_t original_size = size;
+
     /* Add the obligatory arena header, and round up */
     size = (size + 2 * sizeof(struct arena_header) - 1) & ARENA_SIZE_MASK;
 
@@ -168,7 +170,7 @@ void *malloc(size_t size)
     malloc_unlock();
 
 #ifdef DEBUG_MALLOC
-    DEBUG("malloc(%d) = 0x%x", size, result);
+    DEBUG("malloc(%d) = 0x%x", original_size, result);
 #endif
     return result;
 }
@@ -227,12 +229,14 @@ unsigned int get_malloc_size(void *ptr) {
 void *realloc(void *ptr, size_t size)
 {
     void *new;
+    size_t adjusted_size = (size + 2 * sizeof(struct arena_header) - 1) & ARENA_SIZE_MASK;
+
 
     if (!ptr) {
         new = malloc(size);
         if (!new) { goto error; }
     } else {
-        if (get_malloc_size(ptr) < size) {
+        if (get_malloc_size(ptr) < adjusted_size) {
             new = malloc(size);
             if (!new) { goto error; }
 
