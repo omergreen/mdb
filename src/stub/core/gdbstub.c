@@ -272,20 +272,20 @@ static int dbg_send_packet(const char *pkt_data, size_t pkt_len)
 		return EOF;
 	}
 
-#if DEBUGMODE
-	{
-		size_t p;
-		target_log("-> ");
-		for (p = 0; p < pkt_len; p++) {
-			if (dbg_is_printable_char(pkt_data[p])) {
-				target_log("%c", pkt_data[p]);
-			} else {
-				target_log("\\x%02x", pkt_data[p]&0xff);
-			}
-		}
-		target_log("\n");
-	}
-#endif
+/* #if DEBUGMODE */
+/* 	{ */
+/* 		size_t p; */
+/* 		target_log("-> "); */
+/* 		for (p = 0; p < pkt_len; p++) { */
+/* 			if (dbg_is_printable_char(pkt_data[p])) { */
+/* 				target_log("%c", pkt_data[p]); */
+/* 			} else { */
+/* 				target_log("\\x%02x", pkt_data[p]&0xff); */
+/* 			} */
+/* 		} */
+/* 		target_log("\n"); */
+/* 	} */
+/* #endif */
 
 	/* Send packet data */
 	if (target_send(pkt_data, pkt_len) == EOF) {
@@ -350,20 +350,20 @@ static int dbg_recv_packet(char *pkt_buf, size_t pkt_buf_len, size_t *pkt_len)
 		}
 	}
 
-#if DEBUGMODE
-	{
-		size_t p;
-		target_log("<- ");
-		for (p = 0; p < *pkt_len; p++) {
-			if (dbg_is_printable_char(pkt_buf[p])) {
-				target_log("%c", pkt_buf[p]);
-			} else {
-				target_log("\\x%02x", pkt_buf[p] & 0xff);
-			}
-		}
-		target_log("\n");
-	}
-#endif
+/* #if DEBUGMODE */
+/* 	{ */
+/* 		size_t p; */
+/* 		target_log("<- "); */
+/* 		for (p = 0; p < *pkt_len; p++) { */
+/* 			if (dbg_is_printable_char(pkt_buf[p])) { */
+/* 				target_log("%c", pkt_buf[p]); */
+/* 			} else { */
+/* 				target_log("\\x%02x", pkt_buf[p] & 0xff); */
+/* 			} */
+/* 		} */
+/* 		target_log("\n"); */
+/* 	} */
+/* #endif */
 
 	/* Receive the checksum */
 	if ((target_recv(buf, 2) == EOF) ||
