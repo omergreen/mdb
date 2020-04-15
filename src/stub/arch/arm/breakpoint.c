@@ -37,22 +37,21 @@ trampoline:\
     __builtin_unreachable();
 }
 
-struct breakpoint global_bp1;
-struct breakpoint global_bp2;
 /*
  * Called directly from the breakpoint stub, this function parses the stack to get the register state
  * and then gives control to the core.
  */
-__attribute__((noreturn)) static void jump_breakpoint_handler(struct breakpoint *bp, unsigned int sp) {
-    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", bp->address, sp);
+__attribute__((noreturn)) static void jump_breakpoint_handler(unsigned int address, unsigned int sp) {
+    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", address, sp);
 
     struct registers_from_stub *regs = (struct registers_from_stub *)sp;
-    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, bp->address);
+    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, address);
 
-    breakpoint_handler(bp->address);
+    // give control to the core
+    breakpoint_handler();
 
     registers_update_to_stub(&g_state.regs, (struct registers_from_stub *)sp);
-    jump_breakpoint_epilogue(g_state.regs.pc, sp); // TODO: store the PC instead of address of the breakpoint struct
+    jump_breakpoint_epilogue(g_state.regs.pc, sp);
 }
 
 static void fill_offset(void *stub, int offset, void *value) {
@@ -62,7 +61,7 @@ static void fill_offset(void *stub, int offset, void *value) {
 /*
  * Replace the code at bp->address with a jump to jump_breakpoint_stub.
  * We allocate a stub for each breakpoint because we need some way to let ourselves know
- * which breakpoint was triggered - so for each stub we fill the bp_address with the relevant breakpoint struct pointer
+ * which breakpoint was triggered - so for each stub we fill the bp_address with the breakpoint's address
  * jump_breakpoint_handler is called with that breakpoint and so we can pass the core the triggered breakpoint
  */
 bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
@@ -72,15 +71,13 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
         return false;
     }
 
-    /* DEBUG("stub for bp at 0x%08x allocated at 0x%08x", bp->address, stub); */
-
     memcpy(stub, &jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
     // fill in the required stuff for the stub:
     // - bp_address so that the handler will know which breakpoint was triggered
     // - handler_func and epilogue_func are technically static, but we can't fill them 
     //   at compile time due to PICness. We can initialize them once at init time instead of each
     //   time here, but does it really matter
-    fill_offset(stub, JUMP_BREAKPOINT_STUB_BP_ADDRESS_OFFSET, bp);
+    fill_offset(stub, JUMP_BREAKPOINT_STUB_BP_ADDRESS_OFFSET, (void *)bp->address);
     fill_offset(stub, JUMP_BREAKPOINT_STUB_HANDLER_FUNC_OFFSET, &jump_breakpoint_handler);
     fill_offset(stub, JUMP_BREAKPOINT_STUB_EPILOGUE_FUNC_OFFSET, &jump_breakpoint_epilogue);
 
@@ -100,13 +97,16 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
  * Replace the breakpoint at bp->addres with the original code
  */
 bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
-    /* DEBUG("disabling bp at 0x%08x", bp->address); */
+    if (bp->arch_specific.stub == NULL) {
+        ERROR("disable on an already disabled breakpoint?");
+    }
+    else {
+        target_free(bp->arch_specific.stub);
+        bp->arch_specific.stub = NULL;
+    }
 
-    target_free(bp->arch_specific.stub);
     memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
-
-    bp->arch_specific.stub = NULL;
 
     return true;
 }

@@ -8,10 +8,14 @@
 
 #pragma once
 
+// flush the instruction cache
 void target_cache_flush(void *start, unsigned int length);
 
+// receive data (gdb remote)
 unsigned int target_recv(char *output, unsigned int length);
+// send data (gdb remote)
 unsigned int target_send(const char *data, unsigned int length);
+// send data to be logged
 void target_log(const char *format, ...);
 
 void *target_malloc(unsigned int size);

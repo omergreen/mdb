@@ -723,7 +723,7 @@ bool send_target_xml(int offset, int length) {
 /*
  * Main debug loop. Handles commands.
  */
-int gdbstub()
+enum action gdbstub()
 {
 	address     addr;
 	char        pkt_buf[256];
@@ -1058,6 +1058,6 @@ int gdbstub()
 		#undef token_expect_integer_arg
 	}
 
-	return 0;
+	return ACTION_CONTINUE;
 }
 

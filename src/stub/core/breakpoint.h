@@ -18,7 +18,7 @@ struct breakpoint {
 // Public breakpoint interface
 
 // Entry point from the arch specific breakpoint handler
-void breakpoint_handler(unsigned int address);
+void breakpoint_handler();
 
 // Add a new breakpoint at `address`, without enabling it
 void breakpoint_add(unsigned int address, bool temporary);
@@ -28,12 +28,6 @@ void breakpoint_remove(unsigned int address);
 
 // Returns if a breakpoint is enabled at `address`
 bool breakpoint_exists(unsigned int address);
-
-/* // Enable an existing disabled breakpoint */
-/* void breakpoint_enable(unsigned int address, bool temporary); */
-
-/* // Disable an existing enabled breakpoint */
-/* void breakpoint_disable(unsigned int address, bool temporary); */
 
 void breakpoint_disable_all_temporarily();
 void breakpoint_restore_all_temporarily();

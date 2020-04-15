@@ -30,8 +30,6 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
 }
 
 void test_app() {
-    /* target_log("in a loop\n"); */
-
     int i = 0;
 
     struct timespec req;

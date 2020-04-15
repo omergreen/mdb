@@ -24,6 +24,11 @@ int memcmp(const void *s1, const void *s2, size_t n);
 int strcmp(const char *s1, const char *s2);
 int strncmp(const char *s1, const char *s2, size_t n);
 
+// swap the endian of `val` (32 bit)
+unsigned int swap32(unsigned int val);
+// swap the endian of `val` (16 bit)
+unsigned short swap16(unsigned short val);
+
 unsigned int htonl(unsigned int hostlong);
 unsigned short htons(unsigned short hostshort);
 #define ntohl htonl

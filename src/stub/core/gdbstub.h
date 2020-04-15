@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "core.h"
 
 /*****************************************************************************
  * Macros
@@ -36,5 +37,5 @@ typedef unsigned long address;
  * Prototypes
  ****************************************************************************/
 
-int gdbstub();
+enum action gdbstub();
 

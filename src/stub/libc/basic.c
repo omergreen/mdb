@@ -109,19 +109,26 @@ int strncmp(const char *s1, const char *s2, size_t n)
 	return d;
 }
 
+unsigned int swap32(unsigned int val) {
+    return ((val>>24) & 0xff)     |
+           ((val<<8)  & 0xff0000) |
+           ((val>>8)  & 0xff00)   |
+           ((val<<24) & 0xff000000);
+}
+
+unsigned short swap16(unsigned short val) {
+    return (val>>8) | (val<<8);
+}
+
 unsigned int htonl(unsigned int hostlong) {
 #if DATA_ENDIAN != BIG // network endian is big
-    hostlong = ((hostlong>>24) & 0xff)     |
-               ((hostlong<<8)  & 0xff0000) |
-               ((hostlong>>8)  & 0xff00)   |
-               ((hostlong<<24) & 0xff000000);
+    hostlong = swap32(hostlong);
 #endif
     return hostlong;
 }
 unsigned short htons(unsigned short hostshort) {
-/* #if DATA_ENDIAN != BIG // network endian is big */
 #if DATA_ENDIAN != ENDIAN_BIG
-    hostshort = (hostshort>>8) | (hostshort<<8);
+    hostshort = swap16(hostshort);
 #endif
     return hostshort;
 }

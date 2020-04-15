@@ -45,18 +45,13 @@ static CORE_ADDR addr_bits_remove(struct arm_get_next_pcs *self, CORE_ADDR val) 
     return UNMAKE_THUMB_ADDR(val);
 }
 
-// TODO: should use state
 pc_list arch_get_next_pc() {
-    // we start by disabling all the breakpoints so they won't interfere when we try to read the memory
-    breakpoint_disable_all_temporarily();
-
    struct arm_get_next_pcs_ops ops = {.read_mem_uint=read_mem_uint, .syscall_next_pc=syscall_next_pc, .addr_bits_remove=addr_bits_remove, .fixup=NULL};
    struct arm_get_next_pcs self;
 
    arm_get_next_pcs_ctor(&self, &ops, DATA_ENDIAN, CODE_ENDIAN, 0, &g_state.regs);
    pc_list next_pcs = arm_get_next_pcs(&self, g_state.regs.cpsr.bits.thumb);
 
-   breakpoint_restore_all_temporarily();
    return next_pcs;
 }
 
