@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <core/log.h>
 #include <target/interface.h>
+#include <netinet/tcp.h>
 
 #include "linux.h"
 
@@ -49,6 +50,8 @@ void init_gdb() {
         return;
     }
 
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+
     struct sockaddr_in sa = {.sin_family = AF_INET, .sin_port = htons(1337), .sin_addr = 0};
     if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
         perror("unable to bind gdb socket");
@@ -69,6 +72,8 @@ void init_gdb() {
         close(sock);
         return;
     }
+
+    setsockopt(g_linux_data.gdb_fd, SOL_TCP, TCP_NODELAY, &(int){1}, sizeof(int));
 
     DEBUG("got connection from %d.%d.%d.%d:%d", sa.sin_addr.s_addr >> 24, (sa.sin_addr.s_addr >> 16) & 0xff, (sa.sin_addr.s_addr >> 8) & 0xff, sa.sin_addr.s_addr & 0xff, ntohs(sa.sin_port));
 }

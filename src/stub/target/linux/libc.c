@@ -57,6 +57,10 @@ int _accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     return syscall(__NR_accept, sockfd, addr, addrlen);
 }
 
+int _setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
+    return syscall(__NR_setsockopt, sockfd, level, optname, optval, optlen);
+}
+
 void target_cache_flush(void *start, unsigned int length) { // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/clear_cache.c
 #if ARCH == arm
     syscall(__ARM_NR_cacheflush, start, start + length, 0);

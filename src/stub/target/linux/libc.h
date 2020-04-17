@@ -18,6 +18,7 @@ int _socket(int domain, int type, int protocol);
 int _bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int _listen(int sockfd, int backlog);
 int _accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int _setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 void _perror(char *s);
 
 void cache_flush_linux(void *start, unsigned int length);
@@ -30,6 +31,7 @@ void cache_flush_linux(void *start, unsigned int length);
 #define bind _bind
 #define listen _listen
 #define accept _accept
+#define setsockopt _setsockopt
 #define perror _perror
 
 #define EPERM         1    /* Operation not permitted */

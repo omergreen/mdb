@@ -3,6 +3,7 @@
  */
 
 #include <target/interface.h>
+#include <core/log.h>
 #include "libc.h"
 
 unsigned int convert_code_data_32(unsigned int val) {
@@ -20,7 +21,13 @@ unsigned short convert_code_data_16(unsigned short val) {
 }
 
 unsigned int build_jump(unsigned int from, unsigned int to) {
-    unsigned int jump = 0xea000000 + (((to - (from + 8)) / 4) & 0xffffff);
+    int delta = ((int)(to - (from + 8))) >> 2;
+    if (delta > 0xffffff || delta < -0xffffff) {
+        ERROR("jump from 0x%x to 0x%x is too far", from, to);
+        assert(1);
+    }
+
+    unsigned int jump = 0xea000000 + (delta & 0xffffff);
     return convert_code_data_32(jump);
 }
 

@@ -75,7 +75,10 @@ void core_loop() {
     }
     
     if (should_stop_on_next_pc) {
+        breakpoint_disable_all_temporarily();
         pc_list next_pcs = arch_get_next_pc();
+        breakpoint_restore_all_temporarily();
+
         if (cvector_empty(next_pcs)) {
             ERROR("we don't know what's the next pc");
         }
