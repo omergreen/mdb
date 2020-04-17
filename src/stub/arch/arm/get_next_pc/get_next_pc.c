@@ -46,10 +46,14 @@ static CORE_ADDR addr_bits_remove(struct arm_get_next_pcs *self, CORE_ADDR val) 
 }
 
 pc_list arch_get_next_pc() {
-   struct arm_get_next_pcs_ops ops = {.read_mem_uint=read_mem_uint, .syscall_next_pc=syscall_next_pc, .addr_bits_remove=addr_bits_remove, .fixup=NULL};
+   struct arm_get_next_pcs_ops ops;
    struct arm_get_next_pcs self;
+   ops.read_mem_uint = &read_mem_uint;
+   ops.syscall_next_pc = &syscall_next_pc;
+   ops.addr_bits_remove = &addr_bits_remove;
+   ops.fixup = NULL;
 
-   arm_get_next_pcs_ctor(&self, &ops, DATA_ENDIAN, CODE_ENDIAN, 0, &g_state.regs);
+   arm_get_next_pcs_ctor(&self, (struct arm_get_next_pcs_ops *)&ops, DATA_ENDIAN, CODE_ENDIAN, 0, &g_state.regs);
    pc_list next_pcs = arm_get_next_pcs(&self, g_state.regs.cpsr.bits.thumb);
 
    return next_pcs;

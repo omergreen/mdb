@@ -12,22 +12,13 @@
 /* Both the arena list and the free memory list are double linked
    list with head node.  This the head node. Note that the arena list
    is sorted in order of address. */
-static struct free_arena_header __malloc_head = {
-    {
-        ARENA_TYPE_HEAD,
-        0,
-        &__malloc_head,
-        &__malloc_head,
-    },
-    &__malloc_head,
-    &__malloc_head
-};
+static struct free_arena_header __malloc_head;
 
 static bool malloc_lock_nop(void) {return true;}
 static void malloc_unlock_nop(void) {}
 
-static malloc_lock_t malloc_lock = (malloc_lock_t)&malloc_lock_nop;
-static malloc_unlock_t malloc_unlock = (malloc_unlock_t)&malloc_unlock_nop;
+static malloc_lock_t malloc_lock;
+static malloc_unlock_t malloc_unlock;
 
 static inline void mark_block_dead(struct free_arena_header *ah)
 {

@@ -92,7 +92,7 @@ unsigned int target_send(const char *data, unsigned int length) {
 }
 
 void target_init(void *args) {
-    char *free_space = (char *)mmap2(0, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0);
+    char *free_space = (char *)mmap2(target_init, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0);
     /* free_space[PAGE_SIZE * 2] = 0; */
     malloc_init();
     init_log();

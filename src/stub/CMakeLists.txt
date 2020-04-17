@@ -38,7 +38,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
                            $<$<BOOL:${DEBUG_MALLOC}>:DEBUG_MALLOC>)
 
 target_compile_options(${PROJECT_NAME} PUBLIC -fno-builtin $<$<BOOL:${DEBUG}>:-ggdb> "-fmacro-prefix-map=${CMAKE_SOURCE_DIR}/=")
-target_link_options(${PROJECT_NAME} PUBLIC -nostdlib -static --entry=_start "-T${PROJECT_SOURCE_DIR}/linker.ld")
+target_link_options(${PROJECT_NAME} PUBLIC -nostdlib -Wl,--no-dynamic-linker --entry=_start "-T${PROJECT_SOURCE_DIR}/linker.ld")
 
 include("${PROJECT_SOURCE_DIR}/machine/arch/CMakeLists.txt")
 include("${PROJECT_SOURCE_DIR}/machine/target/CMakeLists.txt")
@@ -50,6 +50,12 @@ endif()
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_NAME}.bin)
 add_custom_target(${PROJECT_NAME}.bin ALL DEPENDS ${PROJECT_NAME}.tmp)
 
+add_custom_command(
+    OUTPUT ${PROJECT_NAME}.tmp
+    COMMAND ${TOOLCHAIN_PREFIX}objcopy --output-format=binary -j .init -j .text -j .data -j .bss -j .got ${PROJECT_NAME} ${PROJECT_NAME}.tmp
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_NAME}.tmp ${PROJECT_NAME}.bin
+    DEPENDS ${PROJECT_NAME}
+)
 
 # add gdb target xml
 message(${LINKER_ENDIAN_FLAG})

@@ -79,45 +79,46 @@ void *target_realloc(void *ptr, size_t size) {
     return realloc(ptr, size);
 }
  
-char *sys_errlist[] = {
-    [0]        = "Invalid error number",
-    [EPERM]        = "Operation not permitted",
-    [ENOENT]    = "No such file or directory",
-    [ESRCH]        = "No such process",
-    [EINTR]        = "Interrupted system call",
-    [EIO]        = "I/O error",
-    [ENXIO]        = "No such device or address",
-    [E2BIG]        = "Argument list too long",
-    [ENOEXEC]    = "Exec format error",
-    [EBADF]        = "Bad file number",
-    [ECHILD]    = "No child processes",
-    [EAGAIN]    = "Operation would block",
-    [ENOMEM]    = "Out of memory",
-    [EACCES]    = "Permission denied",
-    [EFAULT]    = "Bad address",
-    [ENOTBLK]    = "Block device required",
-    [EBUSY]        = "Device or resource busy",
-    [EEXIST]    = "File exists",
-    [EXDEV]        = "Cross-device link",
-    [ENODEV]    = "No such device",
-    [ENOTDIR]    = "Not a directory",
-    [EISDIR]    = "Is a directory",
-    [EINVAL]    = "Invalid argument",
-    [ENFILE]    = "File table overflow",
-    [EMFILE]    = "Too many open files",
-    [ENOTTY]    = "Not a tty",
-    [ETXTBSY]    = "Text file busy",
-    [EFBIG]        = "File too large",
-    [ENOSPC]    = "No space left on device",
-    [ESPIPE]    = "Illegal seek",
-    [EROFS]        = "Read-only file system",
-    [EMLINK]    = "Too many links",
-    [EPIPE]        = "Broken pipe",
-    [EDOM]        = "Argument outside domain",
-    [ERANGE]    = "Result not representable",
-};
-int sys_nerr = sizeof(sys_errlist) / sizeof(sys_errlist[0]);
 void _perror(char *s) {
+    int sys_nerr = 35;
+    char *sys_errlist[sys_nerr];
+    // initialize in-place because of PICness
+    sys_errlist[0] = "Invalid error number";
+    sys_errlist[EPERM] = "Operation not permitted";
+    sys_errlist[ENOENT] = "No such file or directory";
+    sys_errlist[ESRCH] = "No such process";
+    sys_errlist[EINTR] = "Interrupted system call";
+    sys_errlist[EIO] = "I/O error";
+    sys_errlist[ENXIO] = "No such device or address";
+    sys_errlist[E2BIG] = "Argument list too long";
+    sys_errlist[ENOEXEC] = "Exec format error";
+    sys_errlist[EBADF] = "Bad file number";
+    sys_errlist[ECHILD] = "No child processes";
+    sys_errlist[EAGAIN] = "Operation would block";
+    sys_errlist[ENOMEM] = "Out of memory";
+    sys_errlist[EACCES] = "Permission denied";
+    sys_errlist[EFAULT] = "Bad address";
+    sys_errlist[ENOTBLK] = "Block device required";
+    sys_errlist[EBUSY] = "Device or resource busy";
+    sys_errlist[EEXIST] = "File exists";
+    sys_errlist[EXDEV] = "Cross-device link";
+    sys_errlist[ENODEV] = "No such device";
+    sys_errlist[ENOTDIR] = "Not a directory";
+    sys_errlist[EISDIR] = "Is a directory";
+    sys_errlist[EINVAL] = "Invalid argument";
+    sys_errlist[ENFILE] = "File table overflow";
+    sys_errlist[EMFILE] = "Too many open files";
+    sys_errlist[ENOTTY] = "Not a tty";
+    sys_errlist[ETXTBSY] = "Text file busy";
+    sys_errlist[EFBIG] = "File too large";
+    sys_errlist[ENOSPC] = "No space left on device";
+    sys_errlist[ESPIPE] = "Illegal seek";
+    sys_errlist[EROFS] = "Read-only file system";
+    sys_errlist[EMLINK] = "Too many links";
+    sys_errlist[EPIPE] = "Broken pipe";
+    sys_errlist[EDOM] = "Argument outside domain";
+    sys_errlist[ERANGE] = "Result not representable";
+
     int idx = errno;
     if (idx >= sys_nerr)
         idx = 0;

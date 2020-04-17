@@ -35,7 +35,9 @@ void fix_got() {
     unsigned long start = (unsigned long)&_start;
     unsigned long *got = (unsigned long *)(start + (unsigned long)&__GOT_OFFSET); // stackoverflow.com/q/8398755
     for (unsigned int i = 0; i < ((unsigned long)&__GOT_LENGTH) / sizeof(*got); ++i) {
-        got[i] += start - (unsigned long)&__START_OFFSET;
+        if ((got[i] & 0xfff00000) == 0x12300000) {
+            got[i] += start - (unsigned long)&__START_OFFSET - 0x12300000;
+        }
     }
 }
 
