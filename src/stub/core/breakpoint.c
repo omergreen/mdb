@@ -22,45 +22,90 @@ bool breakpoint_exists(unsigned int address) {
     return find_breakpoint(address) != NULL;
 }
 
-void breakpoint_enable(unsigned int address) {
-    struct breakpoint *bp = find_breakpoint(address);
-    if (bp == NULL) {
-        ERROR("Breakpoint doesn't exist");
-        return;
+bool breakpoint_enable(struct breakpoint *bp) {
+    if (bp->enabled) {
+        ERROR("breakpoint is already enabled");
+        return false;
+    }
+    if (bp->type == BREAKPOINT_TYPE_JUMP_OR_SOFTWARE) {
+        ERROR("invalid bp->type (JUMP_OR_SOFTWARE should be handled before this function)");
+        return false;
     }
 
-    if (bp->enabled) {
-        return;
-    }
     bp->enabled = true;
 
-    arch_jump_breakpoint_enable(bp); // TODO: change this to more generic arch_x_breakpoint_enable in the future
+    switch (bp->type) {
+        case BREAKPOINT_TYPE_JUMP:
+            return arch_jump_breakpoint_enable(bp); 
+        case BREAKPOINT_TYPE_SOFTWARE:
+            return arch_software_breakpoint_enable(bp);
+        case BREAKPOINT_TYPE_HARDWARE:
+            return arch_hardware_breakpoint_enable(bp);
+        default:
+            ERROR("unknown bp type (%d)", bp->type);
+            bp->enabled = false;
+            return false;
+    }
 }
 
-void breakpoint_disable(unsigned int address) {
-    struct breakpoint *bp = find_breakpoint(address);
-    if (bp == NULL) {
-        ERROR("Breakpoint doesn't exist");
-        return;
-    }
-
+void breakpoint_disable(struct breakpoint *bp) {
     if (!bp->enabled) {
+        ERROR("breakpoint is already disabled");
         return;
     }
-    bp->enabled = false;
+    if (bp->type == BREAKPOINT_TYPE_JUMP_OR_SOFTWARE) {
+        ERROR("invalid bp->type (JUMP_OR_SOFTWARE should be handled before this function)");
+        return;
+    }
 
-    arch_jump_breakpoint_disable(bp); // TODO: change this to more generic arch_x_breakpoint_disable in the future
+    switch (bp->type) {
+        case BREAKPOINT_TYPE_JUMP:
+            arch_jump_breakpoint_disable(bp); 
+            break;
+        case BREAKPOINT_TYPE_SOFTWARE:
+            arch_software_breakpoint_disable(bp);
+            break;
+        case BREAKPOINT_TYPE_HARDWARE:
+            arch_hardware_breakpoint_disable(bp);
+            break;
+        default:
+            ERROR("unknown bp type (%d)", bp->type);
+            return;
+    }
+
+    bp->enabled = false;
 }
 
-void breakpoint_add(unsigned int address, bool temporary) {
+bool breakpoint_add(unsigned int address, bool temporary, enum breakpoint_type type) {
     if (find_breakpoint(address) != NULL) {
         ERROR("breakpoint already exists");
-        return;
+        return false;
     } 
 
-    struct breakpoint bp = { .address = address, .temporary = temporary };
+    struct breakpoint bp = { .address = address, .temporary = temporary, .enabled = false };
+
+    if (type != BREAKPOINT_TYPE_JUMP_OR_SOFTWARE) {
+        bp.type = type;
+        if (!breakpoint_enable(&bp)) {
+            ERROR("unable to add breakpoint of type %d", type);
+            return false;
+        }
+    }
+    else {
+        // first, try jump
+        bp.type = BREAKPOINT_TYPE_JUMP;
+        if (!breakpoint_enable(&bp)) {
+            // try software
+            bp.type = BREAKPOINT_TYPE_SOFTWARE;
+            if (!breakpoint_enable(&bp)) {
+                return false;
+            }
+        }
+    }
+
     cvector_push_back(g_state.breakpoints, bp);
-    breakpoint_enable(bp.address);
+    
+    return true;
 }
 
 void breakpoint_remove(unsigned int address) {
@@ -71,19 +116,25 @@ void breakpoint_remove(unsigned int address) {
         return;
     }
 
-    breakpoint_disable(bp->address);
+    if (bp->enabled) {
+        breakpoint_disable(bp);
+    }
 
     cvector_erase(g_state.breakpoints, bp-cvector_begin(g_state.breakpoints));
 }
 
 void breakpoint_disable_all_temporarily() {
     for (struct breakpoint *bp = cvector_begin(g_state.breakpoints); bp != cvector_end(g_state.breakpoints); bp++) {
-        breakpoint_disable(bp->address);
+        if ((bp->type == BREAKPOINT_TYPE_JUMP || bp->type == BREAKPOINT_TYPE_SOFTWARE) && bp->enabled) {
+            breakpoint_disable(bp);
+        }
     }
 }
 void breakpoint_restore_all_temporarily() {
     for (struct breakpoint *bp = cvector_begin(g_state.breakpoints); bp != cvector_end(g_state.breakpoints); bp++) {
-        breakpoint_enable(bp->address);
+        if ((bp->type == BREAKPOINT_TYPE_JUMP || bp->type == BREAKPOINT_TYPE_SOFTWARE) && !bp->enabled) {
+            breakpoint_enable(bp);
+        }
     }
 }
 

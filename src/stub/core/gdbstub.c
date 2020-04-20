@@ -1023,7 +1023,7 @@ enum action gdbstub()
                     dbg_send_error_packet(pkt_buf, sizeof(pkt_buf), 1);
                 }
                 else {
-                    breakpoint_add(addr, false);
+                    breakpoint_add(addr, false, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE);
                 }
             }
             else {

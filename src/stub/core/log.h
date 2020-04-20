@@ -36,7 +36,7 @@
 #endif
 
 
-#define _MESSAGE(s, type, color, ...) target_log(COLORIZE_FORMAT("%s") " %s:%d: %s" s "%s\n", COLORIZE_ARGS(color, type), __FILE__, __LINE__, COLORIZE_ARGS(color, ##__VA_ARGS__))
+#define _MESSAGE(s, type, color, ...) target_log(COLORIZE_FORMAT("%s") " %s %s:%d: %s" s "%s\n", COLORIZE_ARGS(color, type), __func__, __FILE__, __LINE__, COLORIZE_ARGS(color, ##__VA_ARGS__))
 
 #ifdef DEBUGMODE
 #define DEBUG(s, ...) _MESSAGE(s, "DEBUG", KYEL, ##__VA_ARGS__)

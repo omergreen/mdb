@@ -24,7 +24,7 @@ __attribute__((used,section(".init"))) void _start(void *args) {
     target_init(args);
 
     unsigned int bp_address = (unsigned int)test_app;
-    breakpoint_add(bp_address, false);
+    breakpoint_add(bp_address, false, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE);
 
     test_app();
 
@@ -46,7 +46,7 @@ void core_loop() {
     // on the previous pc if needed
     breakpoint_remove_temporay();
     if (g_state.previous_pc_breakpoint != 0) {
-        breakpoint_add(g_state.previous_pc_breakpoint, false);
+        breakpoint_add(g_state.previous_pc_breakpoint, false, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE);
         g_state.previous_pc_breakpoint = 0;
     }
 
@@ -85,7 +85,7 @@ void core_loop() {
 
         for (CORE_ADDR *next_pc = cvector_begin(next_pcs); next_pc != cvector_end(next_pcs); next_pc++) {
             if (!breakpoint_exists(*next_pc)) {
-                breakpoint_add(*next_pc, true); // add a temporary breakpoint
+                breakpoint_add(*next_pc, true, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE); // add a temporary breakpoint
             }
         }
 

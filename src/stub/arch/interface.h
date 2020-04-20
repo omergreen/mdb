@@ -15,7 +15,11 @@ typedef unsigned long CORE_ADDR;
 typedef cvector_vector_type(CORE_ADDR) pc_list;
 
 bool arch_jump_breakpoint_enable(struct breakpoint *bp);
-bool arch_jump_breakpoint_disable(struct breakpoint *bp);
+void arch_jump_breakpoint_disable(struct breakpoint *bp);
+bool arch_software_breakpoint_enable(struct breakpoint *bp);
+void arch_software_breakpoint_disable(struct breakpoint *bp);
+bool arch_hardware_breakpoint_enable(struct breakpoint *bp);
+void arch_hardware_breakpoint_disable(struct breakpoint *bp);
 
 void arch_cache_flush(void *start, unsigned int length);
 

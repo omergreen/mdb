@@ -96,7 +96,7 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
 /*
  * Replace the breakpoint at bp->addres with the original code
  */
-bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
+void arch_jump_breakpoint_disable(struct breakpoint *bp) {
     if (bp->arch_specific.stub == NULL) {
         ERROR("disable on an already disabled breakpoint?");
     }
@@ -107,7 +107,18 @@ bool arch_jump_breakpoint_disable(struct breakpoint *bp) {
 
     memcpy((void *)bp->address, bp->arch_specific.original_data, BREAKPOINT_LENGTH);
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
+}
 
-    return true;
+
+bool arch_software_breakpoint_enable(struct breakpoint *bp) {
+    return false;
+}
+void arch_software_breakpoint_disable(struct breakpoint *bp) {
+}
+
+bool arch_hardware_breakpoint_enable(struct breakpoint *bp) {
+    return false;
+}
+void arch_hardware_breakpoint_disable(struct breakpoint *bp) {
 }
 
