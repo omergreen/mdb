@@ -8,11 +8,15 @@ elseif(NOT EXISTS "${PROJECT_SOURCE_DIR}/arch/${ARCH}")
     message(FATAL_ERROR "ARCH: ${ARCH} is not valid, set it to one of arch/ subdirectories")
 endif()
 
+
 if(NOT DEFINED TARGET_TYPE)
     message(FATAL_ERROR "TARGET_TYPE is not defined, set it to one of target/ subdirectories")
 elseif(NOT EXISTS "${PROJECT_SOURCE_DIR}/target/${TARGET_TYPE}")
     message(FATAL_ERROR "TARGET_TYPE: ${TARGET_TYPE} is not valid, set it to one of target/ subdirectories")
 endif()
+
+string(TOUPPER ${ARCH} ARCH_UPPER)
+string(TOUPPER ${TARGET_TYPE} TARGET_TYPE_UPPER)
 
 if(NOT DEFINED TOOLCHAIN_PREFIX)
     message(FATAL_ERROR "TOOLCHAIN_PREFIX is not defined")
@@ -32,8 +36,8 @@ file(GLOB_RECURSE STUB_SOURCES core/*.c libc/*.c)
 add_executable(${PROJECT_NAME} ${STUB_SOURCES})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-                           ARCH=${ARCH}
-                           TARGET_TYPE=${TARGET_TYPE}
+                           ARCH_${ARCH_UPPER}
+                           TARGET_TYPE_${TARGET_TYPE_UPPER}
                            $<$<BOOL:${DEBUG}>:DEBUGMODE>
                            $<$<BOOL:${DEBUG_MALLOC}>:DEBUG_MALLOC>)
 

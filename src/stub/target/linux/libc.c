@@ -10,6 +10,10 @@
 #include <core/log.h>
 #include <libc/libc.h>
 
+#ifdef ARCH_MIPS
+#include <asm/cachectl.h>
+#endif
+
 long errno;
 
 void *mmap2(void *addr, unsigned long len, int prot, int flags, int fildes, signed long off) {
@@ -62,9 +66,9 @@ int _setsockopt(int sockfd, int level, int optname, const void *optval, socklen_
 }
 
 void target_cache_flush(void *start, unsigned int length) { // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/clear_cache.c
-#if ARCH == arm
+#ifdef ARCH_ARM
     syscall(__ARM_NR_cacheflush, start, start + length, 0);
-#elif ARCH == mips
+#elif ARCH_MIPS
     syscall(__NR_cacheflush, start, length, BCACHE);
 #else
 #error "bassa"

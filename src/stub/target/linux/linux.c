@@ -97,8 +97,7 @@ unsigned int target_send(const char *data, unsigned int length) {
 }
 
 void target_init(void *args) {
-    char *free_space = (char *)mmap2(target_init, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0);
-    /* free_space[PAGE_SIZE * 2] = 0; */
+    char *free_space = (char *)mmap2(target_init, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0); // addr is target_init - small hack to make the heap be close to the code so that the jumps will work
     malloc_init();
     init_log();
     init_gdb();
