@@ -18,5 +18,9 @@ extern void *jump_breakpoint_stub;
 extern void *jump_breakpoint_stub_end;
 extern void *jump_breakpoint_stub_bp_address;
 extern void *jump_breakpoint_stub_handler_func;
-extern void *jump_breakpoint_stub_epilogue_func;
+
+/*
+ * Restore the CPU state and jump back to the original code
+ */
+extern __attribute__((noreturn)) void (jump_breakpoint_epilogue)(unsigned long return_address, unsigned long sp);
 

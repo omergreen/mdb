@@ -37,8 +37,10 @@ void raise(int sig) { // needed for the ARM div functions
 }
 
 void arch_cache_flush() {
+    // for new ARM (7+) we can try dsb + isb (https://blog.senr.io/blog/why-is-my-perfectly-good-shellcode-not-working-cache-coherency-on-mips-and-arm)
     asm("\
     MOV    r0, #0;\
+    MCR    p15, 0, r0, c7, c10, 4; # ensure all stores are complete\
     MCR    p15, 0, r0, c7, c5, 0; # Flush entire ICache\
     ");
 }
