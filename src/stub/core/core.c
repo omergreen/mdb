@@ -4,7 +4,6 @@
 
 #include <arch/interface.h>
 #include <target/interface.h>
-#include "test_app.h"
 #include <libc/libc.h>
 #include "gdbstub.h"
 #include "state.h"
@@ -22,13 +21,6 @@ __attribute__((used,section(".init"))) void _start(void *args) {
     fix_got();
     arch_init();
     target_init(args);
-
-    unsigned int bp_address = (unsigned int)test_app;
-    breakpoint_add(bp_address, false, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE);
-
-    test_app();
-
-    return;
 }
 
 void fix_got() {
@@ -57,6 +49,7 @@ void core_loop() {
         breakpoint_disable_all_temporarily();
         enum action action = gdbstub();
         breakpoint_restore_all_temporarily();
+
         switch (action) {
             case ACTION_CONTINUE:
                 g_state.state = STATE_CONTINUE;

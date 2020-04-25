@@ -6,8 +6,10 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 extern long errno;
+typedef struct sigaction struct_sigaction; // small hack since we #define sigaction as _sigaction
 
 void *mmap2(void *addr, unsigned long len, int prot, int flags, int fildes, signed long off);
 int _open(const char *filename, int flags, ...);
@@ -19,6 +21,8 @@ int _bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int _listen(int sockfd, int backlog);
 int _accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int _setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+int _sigaction(int signum, const struct_sigaction *act, struct_sigaction *oldact);
+int _sigemptyset(sigset_t *set);
 void _perror(char *s);
 
 void cache_flush_linux(void *start, unsigned int length);
@@ -32,6 +36,8 @@ void cache_flush_linux(void *start, unsigned int length);
 #define listen _listen
 #define accept _accept
 #define setsockopt _setsockopt
+#define sigaction _sigaction
+#define sigemptyset _sigemptyset
 #define perror _perror
 
 #define EPERM         1    /* Operation not permitted */

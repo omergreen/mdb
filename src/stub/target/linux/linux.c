@@ -3,7 +3,9 @@
  */
 
 #include <libc/libc.h>
+#include <core/state.h>
 #include <sys/mman.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <arpa/inet.h>
@@ -11,6 +13,7 @@
 #include <target/interface.h>
 #include <netinet/tcp.h>
 
+#include "test_app.h"
 #include "linux.h"
 
 #define PAGE_SIZE 4096
@@ -96,6 +99,22 @@ unsigned int target_send(const char *data, unsigned int length) {
     return write(g_linux_data.gdb_fd, data, length);
 }
 
+bool target_supports_real_breakpoints() {
+    return true;
+}
+
+void sigaction_handler(int sig, siginfo_t *info, void *ucontext) {
+    struct ucontext_t *c = ucontext;
+
+#ifdef ARCH_ARM
+    memcpy(&g_state.regs.r0, &c->uc_mcontext.arm_r0, sizeof(g_state.regs));
+#else
+#error "unimplemented"
+#endif
+
+    breakpoint_handler();
+}
+
 void target_init(void *args) {
     char *free_space = (char *)mmap2(target_init, PAGE_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, 0, 0); // addr is target_init - small hack to make the heap be close to the code so that the jumps will work
     malloc_init();
@@ -103,5 +122,16 @@ void target_init(void *args) {
     init_gdb();
 
     add_malloc_block(free_space, PAGE_SIZE);
+
+    struct_sigaction action = { .sa_handler = NULL, .sa_sigaction = sigaction_handler, .sa_flags = SA_SIGINFO };
+    sigemptyset(&action.sa_mask);
+    if (sigaction(SIGILL, &action, NULL) < 0) {
+        perror("sigaction");
+    }
+
+    unsigned int bp_address = (unsigned int)test_app;
+    breakpoint_add(bp_address, false, BREAKPOINT_TYPE_JUMP_OR_SOFTWARE);
+
+    test_app();
 }
 

@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include "syscall.h"
+#include <signal.h>
 #include <core/log.h>
 #include <libc/libc.h>
 
@@ -73,6 +74,48 @@ void target_cache_flush(void *start, unsigned int length) { // https://github.co
 #else
 #error "bassa"
 #endif
+}
+
+struct kernel_sigaction
+{
+  __sighandler_t k_sa_handler;
+  unsigned long sa_flags;
+  void (*sa_restorer) (void);
+  /* glibc sigset is larger than kernel expected one, however sigaction
+     passes the kernel expected size on rt_sigaction syscall.  */
+  sigset_t sa_mask;
+};
+int _sigaction(int signum, const struct_sigaction *act, struct_sigaction *oldact) {
+    struct kernel_sigaction ksa, oldksa;
+
+    if (act) {
+        ksa.k_sa_handler = act->sa_handler;
+        ksa.sa_flags = act->sa_flags;
+        ksa.sa_restorer = act->sa_restorer;
+        memcpy(&ksa.sa_mask, &act->sa_mask, sizeof(ksa.sa_mask));
+    }
+
+    int ret = syscall(__NR_rt_sigaction, signum, act ? &ksa : NULL, oldact ? &oldksa : NULL, _NSIG/8);
+
+    if (oldact && ret >= 0) {
+        oldact->sa_handler = oldksa.k_sa_handler;
+        oldact->sa_flags = oldksa.sa_flags;
+        oldact->sa_restorer = oldksa.sa_restorer;
+        memcpy(&oldact->sa_mask, &ksa.sa_mask, sizeof(ksa.sa_mask));
+    }
+
+    return ret;
+}
+
+int _sigemptyset(sigset_t *set)
+{
+	set->__val[0] = 0;
+	if (sizeof(long)==4 || _NSIG > 65) set->__val[1] = 0;
+	if (sizeof(long)==4 && _NSIG > 65) {
+		set->__val[2] = 0;
+		set->__val[3] = 0;
+	}
+	return 0;
 }
 
 void *target_malloc(size_t size) {
