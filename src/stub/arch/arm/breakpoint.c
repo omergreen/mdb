@@ -22,7 +22,7 @@ __attribute__((noreturn)) static void jump_breakpoint_handler(unsigned int addre
     // give control to the core
     breakpoint_handler();
 
-    registers_update_to_stub(&g_state.regs, (struct registers_from_stub *)sp);
+    registers_update_to_stub(&g_state.regs, regs);
     jump_breakpoint_epilogue(g_state.regs.pc, sp);
 }
 
@@ -89,15 +89,59 @@ void arch_jump_breakpoint_disable(struct breakpoint *bp) {
 }
 
 
-bool arch_software_breakpoint_enable(struct breakpoint *bp) {
-    return false;
+void ivt_breakpoint_init_handler() {
+    if (!g_target_config.should_override_ivt) {
+        return;
+    }
+
+    // TODO: consider moving the vector table somewhere else if it's read only
+    //
+    unsigned long *ivt = (unsigned long *)determine_ivt();
+
+    // we modify both the relevant vector (prefetch abort occurs on BKPT or debug registers)
+    // and another one which is unused in all modes except hypervisor, to allow far jumps
+    ivt[3] = convert_code_data_32(0xe59ff000); // prefetch abort - ldr pc, [pc]
+    ivt[5] = (unsigned long)&ivt_breakpoint_interrupt_handler; // not used
 }
+
+static bool ivt_init = false;
+bool arch_software_breakpoint_enable(struct breakpoint *bp) {
+    if (!ivt_init) {
+        ivt_breakpoint_init_handler();
+        ivt_init = true;
+    }
+
+    memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
+#ifdef TARGET_TYPE_LINUX
+    *(unsigned int *)bp->address = 0xffffffff; // qemu linux doesn't really work well with SIGTRAP (at least for arm) so we use SIGILL instead for debugging
+#else
+    *(unsigned int *)bp->address = convert_code_data_32(0xe1200070); // bkpt
+#endif
+    cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
+    return true;
+}
+
 void arch_software_breakpoint_disable(struct breakpoint *bp) {
+    memcpy((void *)bp->address, bp->arch_specific.original_data, sizeof(bp->arch_specific.original_data));
+    cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 }
 
 bool arch_hardware_breakpoint_enable(struct breakpoint *bp) {
     return false;
 }
+
 void arch_hardware_breakpoint_disable(struct breakpoint *bp) {
+}
+
+unsigned long ivt_breakpoint_handler(unsigned int address, unsigned int sp) {
+    struct registers_from_stub *regs = (struct registers_from_stub *)sp;
+    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, address);
+
+    // give control to the core
+    breakpoint_handler();
+
+    registers_update_to_stub(&g_state.regs, regs);
+
+    return g_state.regs.pc;
 }
 

@@ -19,6 +19,7 @@
 #define PAGE_SIZE 4096
 
 struct linux_data g_linux_data;
+struct target_config g_target_config = { .supports_real_breakpoints = true, .should_override_ivt = false };
 
 void target_cleanup() {
     /* close(g_linux_data.log_fd); */
@@ -97,10 +98,6 @@ unsigned int target_send(const char *data, unsigned int length) {
     }
 
     return write(g_linux_data.gdb_fd, data, length);
-}
-
-bool target_supports_real_breakpoints() {
-    return true;
 }
 
 void sigaction_handler(int sig, siginfo_t *info, void *ucontext) {

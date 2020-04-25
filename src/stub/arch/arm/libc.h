@@ -21,6 +21,10 @@ unsigned short convert_code_data_16(unsigned short val);
  */
 unsigned int build_jump(unsigned int from, unsigned int to);
 
+// find the vector table location
+// important - works only for arm-a, assumes we are in secure mode
+unsigned long determine_ivt();
+
 void cache_flush();
 
 

@@ -3,6 +3,7 @@
 .global jump_breakpoint_stub_bp_address
 .global jump_breakpoint_stub_handler_func
 .global jump_breakpoint_epilogue
+.global ivt_breakpoint_interrupt_handler
 
 jump_breakpoint_stub:
     PUSH {R0-R12,LR}
@@ -34,4 +35,72 @@ jump_breakpoint_epilogue: // r0 - return address, r1 - sp
     LDR PC, return_address
 
 return_address: .word 0
+
+
+.equ MODE_USR, 0x10
+.equ MODE_FIQ, 0x11
+.equ MODE_IRQ, 0x12
+.equ MODE_SVC, 0x13
+.equ MODE_ABT, 0x17
+.equ MODE_UND, 0x1B
+.equ MODE_SYS, 0x1F
+.equ MODE_MASK, 0x1f
+
+// TODO: check if sp is 0 (i.e. no one initialized our stack) and do something
+ivt_breakpoint_interrupt_handler:
+    SUB LR, #4 // set LR to breakpoint (on prefetch abort we have to offset PC by 4)
+    STR LR, ivt_breakpoint_abort_lr
+
+    // backup r0 and r1 since we use them as temp registers
+    STR R0, ivt_breakpoint_r0
+    STR R1, ivt_breakpoint_r1
+
+    MRS R0, spsr // read original cpsr
+    BIC R0, #~MODE_MASK // clear anything but the mode
+    // if we came from user mode, switch to system instead (which shared registers
+    // with user mode) to avoid losing privilege
+    CMP R0, #MODE_USR
+    MOVEQ R0, #MODE_SYS
+
+    // we want to keep cpsr the same, but switch the mode back to the one we came from
+    // to access its' LR and SP (since they are banked)
+    MRS R1, cpsr
+    BIC R1, #MODE_MASK // clear the previous mode
+    ORR R0, R1 // cpsr = (cpsr without mode) | old mode
+    MRS R1, cpsr // backup cpsr so we can restore it afterwards
+    MSR cpsr, R0
+
+    // now we are in the original mode
+    STR LR, ivt_breakpoint_system_lr
+    STR SP, ivt_breakpoint_system_sp
+
+    // switch back
+    MSR cpsr, R1
+
+    // SP still points to the abort stack
+    LDR R0, ivt_breakpoint_r0 // restore r0
+    LDR R1, ivt_breakpoint_r1 // restore r1
+    LDR LR, ivt_breakpoint_system_lr
+    PUSH {R0-R12, LR}
+    MRS R0, spsr // read original cpsr
+    LDR R1, ivt_breakpoint_system_sp
+    PUSH {R0, R1}
+    
+    LDR R0, ivt_breakpoint_abort_lr // address of breakpoint
+    MOV R1, SP
+    BL ivt_breakpoint_handler
+    STR R0, ivt_breakpoint_abort_lr // override return address if needed
+
+    POP {R0, R1}
+    POP {R0-R12, LR}
+    LDR LR, ivt_breakpoint_abort_lr
+    SUBS PC, LR, #0 // restores original cpsr, switches back to normal mode with original LR
+
+// banked registers per mode are {lr, sp}
+ivt_breakpoint_abort_lr: .word 0
+ivt_breakpoint_system_lr: .word 0
+ivt_breakpoint_system_sp: .word 0
+ivt_breakpoint_r0: .word 0
+ivt_breakpoint_r1: .word 0
+
 

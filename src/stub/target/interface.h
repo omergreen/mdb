@@ -26,6 +26,8 @@ void target_free(void *addr);
 void target_init();
 void target_cleanup();
 
-// whether we can put software or hardware breakpoints
-bool target_supports_real_breakpoints();
+extern struct target_config {
+    bool supports_real_breakpoints; // whether we can put software or hardware breakpoints
+    bool should_override_ivt; // should the arch override the IVT by itself
+} g_target_config;
 

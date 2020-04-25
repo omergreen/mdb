@@ -31,7 +31,7 @@ bool breakpoint_enable(struct breakpoint *bp) {
         ERROR("invalid bp->type (JUMP_OR_SOFTWARE should be handled before this function)");
         return false;
     }
-    if (!target_supports_real_breakpoints() && (bp->type == BREAKPOINT_TYPE_SOFTWARE || bp->type == BREAKPOINT_TYPE_HARDWARE)) {
+    if (!g_target_config.supports_real_breakpoints && (bp->type == BREAKPOINT_TYPE_SOFTWARE || bp->type == BREAKPOINT_TYPE_HARDWARE)) {
         return false;
     }
 

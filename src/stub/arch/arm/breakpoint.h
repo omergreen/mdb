@@ -12,12 +12,13 @@
 #define JUMP_BREAKPOINT_STUB_SIZE ((unsigned int)&jump_breakpoint_stub_end - (unsigned int)&jump_breakpoint_stub)
 #define JUMP_BREAKPOINT_STUB_BP_ADDRESS_OFFSET ((unsigned int)&jump_breakpoint_stub_bp_address - (unsigned int)&jump_breakpoint_stub)
 #define JUMP_BREAKPOINT_STUB_HANDLER_FUNC_OFFSET ((unsigned int)&jump_breakpoint_stub_handler_func - (unsigned int)&jump_breakpoint_stub)
-#define JUMP_BREAKPOINT_STUB_EPILOGUE_FUNC_OFFSET ((unsigned int)&jump_breakpoint_stub_epilogue_func - (unsigned int)&jump_breakpoint_stub)
 
 extern void *jump_breakpoint_stub;
 extern void *jump_breakpoint_stub_end;
 extern void *jump_breakpoint_stub_bp_address;
 extern void *jump_breakpoint_stub_handler_func;
+
+extern void *ivt_breakpoint_interrupt_handler;
 
 /*
  * Restore the CPU state and jump back to the original code

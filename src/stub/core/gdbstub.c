@@ -723,6 +723,7 @@ bool send_target_xml(int offset, int length) {
 /*
  * Main debug loop. Handles commands.
  */
+bool first_time = true;
 enum action gdbstub()
 {
 	address     addr;
@@ -734,8 +735,15 @@ enum action gdbstub()
 
     int signum = 5; // TODO: ??
 
-	dbg_send_signal_packet(pkt_buf, sizeof(pkt_buf), signum);
-
+    // on the first time we talk with gdb, he doesn't expect to get a signal packet
+    // on the next time we stop, it would be after a "c" or an "s" command, it would expect
+    // to get a signal packet in return
+    if (!first_time) {
+        dbg_send_signal_packet(pkt_buf, sizeof(pkt_buf), signum);
+    }
+    else {
+        first_time = false;
+    }
 
 	while (1) {
 		/* Receive the next packet */
@@ -916,6 +924,7 @@ enum action gdbstub()
 		 */
 		case 'c':
             return ACTION_CONTINUE;
+            break;
 
 		/*
 		 * Single-step
@@ -923,6 +932,7 @@ enum action gdbstub()
 		 */
 		case 's':
             return ACTION_SINGLE_STEP;
+            break;
 
 		case '?':
 			dbg_send_signal_packet(pkt_buf, sizeof(pkt_buf), signum);
