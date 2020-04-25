@@ -43,6 +43,13 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
         return false;
     }
 
+    unsigned int jump = build_jump(bp->address, (unsigned int)stub);
+    if (jump == 0) {
+        // if the stub is too far away from the breakpoint
+        target_free(stub);
+        return false;
+    }
+
     memcpy(stub, &jump_breakpoint_stub, JUMP_BREAKPOINT_STUB_SIZE);
     // fill in the required stuff for the stub:
     // - bp_address so that the handler will know which breakpoint was triggered
@@ -56,9 +63,10 @@ bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
 
     bp->arch_specific.stub = stub; // save it for later so we could free it
 
+    // TODO: add thumb support
     // finally, backup the code at bp->address, and replace it with the jump
     memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
-    *(unsigned int *)bp->address = build_jump(bp->address, (unsigned int)stub);
+    *(unsigned int *)bp->address = jump;
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 
     return true;

@@ -31,21 +31,29 @@ bool breakpoint_enable(struct breakpoint *bp) {
         ERROR("invalid bp->type (JUMP_OR_SOFTWARE should be handled before this function)");
         return false;
     }
+    if (!target_supports_real_breakpoints() && (bp->type == BREAKPOINT_TYPE_SOFTWARE || bp->type == BREAKPOINT_TYPE_HARDWARE)) {
+        return false;
+    }
 
-    bp->enabled = true;
-
+    bool success;
     switch (bp->type) {
         case BREAKPOINT_TYPE_JUMP:
-            return arch_jump_breakpoint_enable(bp); 
+            success = arch_jump_breakpoint_enable(bp); 
+            break;
         case BREAKPOINT_TYPE_SOFTWARE:
-            return arch_software_breakpoint_enable(bp);
+            success = arch_software_breakpoint_enable(bp);
+            break;
         case BREAKPOINT_TYPE_HARDWARE:
-            return arch_hardware_breakpoint_enable(bp);
+            success = arch_hardware_breakpoint_enable(bp);
+            break;
         default:
             ERROR("unknown bp type (%d)", bp->type);
-            bp->enabled = false;
-            return false;
+            success = false;
+            break;
     }
+
+    bp->enabled = success;
+    return success;
 }
 
 void breakpoint_disable(struct breakpoint *bp) {

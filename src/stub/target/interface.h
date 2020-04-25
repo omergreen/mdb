@@ -7,6 +7,7 @@
  */
 
 #pragma once
+#include <stdbool.h>
 
 // flush the instruction cache
 void target_cache_flush(void *start, unsigned int length);
@@ -24,4 +25,7 @@ void target_free(void *addr);
 
 void target_init();
 void target_cleanup();
+
+// whether we can put software or hardware breakpoints
+bool target_supports_real_breakpoints();
 
