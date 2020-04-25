@@ -74,14 +74,14 @@
 	do {                                                                     \
 		const size_t __sz = (count) * sizeof(*(vec)) + (sizeof(size_t) * 2); \
 		if (!(vec)) {                                                        \
-			size_t *__p = malloc(__sz);                                \
+			size_t *__p = target_malloc(__sz);                                \
 			assert(__p);                                                     \
 			(vec) = (void *)(&__p[2]);                                       \
 			cvector_set_capacity((vec), (count));                            \
 			cvector_set_size((vec), 0);                                      \
 		} else {                                                             \
 			size_t *__p1 = &((size_t *)(vec))[-2];                           \
-			size_t *__p2 = realloc(__p1, (__sz));                      \
+			size_t *__p2 = target_realloc(__p1, (__sz));                      \
 			assert(__p2);                                                    \
 			(vec) = (void *)(&__p2[2]);                                      \
 			cvector_set_capacity((vec), (count));                            \
@@ -127,7 +127,7 @@
 	do {                                         \
 		if (vec) {                               \
 			size_t *p1 = &((size_t *)(vec))[-2]; \
-			free(p1);                      \
+			target_free(p1);                      \
 		}                                        \
 	} while (0)
 
