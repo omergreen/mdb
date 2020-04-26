@@ -18,7 +18,8 @@ extern void *jump_breakpoint_stub_end;
 extern void *jump_breakpoint_stub_bp_address;
 extern void *jump_breakpoint_stub_handler_func;
 
-extern void *ivt_breakpoint_interrupt_handler;
+extern void *prefetch_abort_interrupt_handler;
+extern void *data_abort_interrupt_handler;
 
 /*
  * Restore the CPU state and jump back to the original code

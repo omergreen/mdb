@@ -3,7 +3,10 @@
 .global jump_breakpoint_stub_bp_address
 .global jump_breakpoint_stub_handler_func
 .global jump_breakpoint_epilogue
-.global ivt_breakpoint_interrupt_handler
+.global data_abort_interrupt_handler
+.global prefetch_abort_interrupt_handler
+
+// TODO: change SP to some pre-allocated different stack
 
 jump_breakpoint_stub:
     PUSH {R0-R12,LR}
@@ -46,14 +49,28 @@ return_address: .word 0
 .equ MODE_SYS, 0x1F
 .equ MODE_MASK, 0x1f
 
-// TODO: check if sp is 0 (i.e. no one initialized our stack) and do something
-ivt_breakpoint_interrupt_handler:
-    SUB LR, #4 // set LR to breakpoint (on prefetch abort we have to offset PC by 4)
-    STR LR, ivt_breakpoint_abort_lr
+prefetch_abort_interrupt_handler:
+    SUB LR, #4 // on prefetch abort, LR points to PC + 4
+    PUSH {R0}
+    MOV R0, #1
+    STR R0, abort_interrupt_handler_is_prefetch_abort
+    POP {R0}
+    B abort_interrupt_handler
 
-    // backup r0 and r1 since we use them as temp registers
-    STR R0, ivt_breakpoint_r0
-    STR R1, ivt_breakpoint_r1
+data_abort_interrupt_handler:
+    SUB LR, #8 // on data abort, LR points to PC + 8
+    PUSH {R0}
+    MOV R0, #0
+    STR R0, abort_interrupt_handler_is_prefetch_abort
+    POP {R0}
+    B abort_interrupt_handler
+
+// TODO: check if sp is 0 (i.e. no one initialized our stack) and do something
+abort_interrupt_handler:
+    STR LR, abort_interrupt_handler_abort_pc
+
+    // remember that SP here points to the _abort_ stack
+    PUSH {R0, R1} // backup r0 and r1 since we use them as temp registers
 
     MRS R0, spsr // read original cpsr
     BIC R0, #~MODE_MASK // clear anything but the mode
@@ -71,36 +88,34 @@ ivt_breakpoint_interrupt_handler:
     MSR cpsr, R0
 
     // now we are in the original mode
-    STR LR, ivt_breakpoint_system_lr
-    STR SP, ivt_breakpoint_system_sp
+    STR LR, abort_interrupt_handler_system_lr
+    STR SP, abort_interrupt_handler_system_sp
 
     // switch back
     MSR cpsr, R1
 
-    // SP still points to the abort stack
-    LDR R0, ivt_breakpoint_r0 // restore r0
-    LDR R1, ivt_breakpoint_r1 // restore r1
-    LDR LR, ivt_breakpoint_system_lr
+    POP {R0, R1} // restore r0 and r1
+    LDR LR, abort_interrupt_handler_system_lr
     PUSH {R0-R12, LR}
     MRS R0, spsr // read original cpsr
-    LDR R1, ivt_breakpoint_system_sp
+    LDR R1, abort_interrupt_handler_system_sp
     PUSH {R0, R1}
     
-    LDR R0, ivt_breakpoint_abort_lr // address of breakpoint
+    LDR R0, abort_interrupt_handler_abort_pc // address of breakpoint
     MOV R1, SP
-    BL ivt_breakpoint_handler
-    STR R0, ivt_breakpoint_abort_lr // override return address if needed
+    LDR R2, abort_interrupt_handler_is_prefetch_abort
+    BL abort_handler // returns the address we want to return to
+    STR R0, abort_interrupt_handler_return_address
 
     POP {R0, R1}
     POP {R0-R12, LR}
-    LDR LR, ivt_breakpoint_abort_lr
+    LDR LR, abort_interrupt_handler_return_address
     SUBS PC, LR, #0 // restores original cpsr, switches back to normal mode with original LR
 
 // banked registers per mode are {lr, sp}
-ivt_breakpoint_abort_lr: .word 0
-ivt_breakpoint_system_lr: .word 0
-ivt_breakpoint_system_sp: .word 0
-ivt_breakpoint_r0: .word 0
-ivt_breakpoint_r1: .word 0
-
+abort_interrupt_handler_abort_pc: .word 0
+abort_interrupt_handler_system_lr: .word 0
+abort_interrupt_handler_system_sp: .word 0
+abort_interrupt_handler_return_address: .word 0
+abort_interrupt_handler_is_prefetch_abort: .word 0
 
