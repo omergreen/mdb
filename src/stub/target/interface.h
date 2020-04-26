@@ -26,6 +26,11 @@ void target_free(void *addr);
 void target_init();
 void target_cleanup();
 
+// test if `address` is readable, and if `write` is true then also if it's writeable
+// technically an address can be writeable and not readable but... we don't want to override
+// it with something we don't know during testing
+bool target_test_address(unsigned long address, bool write); 
+
 extern struct target_config {
     bool supports_real_breakpoints; // whether we can put software or hardware breakpoints
     bool should_override_ivt; // should the arch override the IVT by itself

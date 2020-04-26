@@ -34,9 +34,19 @@ unsigned short htons(unsigned short hostshort);
 #define ntohl htonl
 #define ntohs htons
 
+// memcpy(dst, src, n), but checks first if src is readable and if
+// dst is writeable
+bool safe_memcpy(void *dst, const void *src, size_t n);
+
 #ifdef OVERRIDE_ARCH_CACHE_FLUSH
 #define cache_flush target_cache_flush
 #else
 #define cache_flush arch_cache_flush
+#endif
+
+#ifdef OVERRIDE_ARCH_TEST_ADDRESS
+#define test_address target_test_address
+#else
+#define test_address arch_test_address
 #endif
 

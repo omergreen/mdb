@@ -23,6 +23,11 @@ void arch_hardware_breakpoint_disable(struct breakpoint *bp);
 
 void arch_cache_flush(void *start, unsigned int length);
 
+// test if `address` is readable, and if `write` is true then also if it's writeable
+// technically an address can be writeable and not readable but... we don't want to override
+// it with something we don't know during testing
+bool arch_test_address(unsigned long address, bool write); 
+
 void arch_init();
 void arch_cleanup();
 

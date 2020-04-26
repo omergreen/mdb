@@ -540,25 +540,13 @@ static int dbg_dec_bin(const char *buf, size_t buf_len, char *data, size_t data_
  */
 static int dbg_mem_read(char *buf, size_t buf_len, address addr, size_t len, dbg_enc_func enc)
 {
-    return enc(buf, buf_len, (char *)addr, len);
-	/* char data[64]; */
-	/* size_t pos; */
+    char temp_buf[len];
 
-	/* if (len > sizeof(data)) { */
-	/* 	return EOF; */
-	/* } */
+    if (!safe_memcpy(temp_buf, (void *)addr, len)) {
+        return EOF;
+    }
 
-	/* /1* Read from system memory *1/ */
-	/* for (pos = 0; pos < len; pos++) { */
-
-	/* 	if (dbg_sys_mem_readb(addr+pos, &data[pos])) { */
-	/* 		/1* Failed to read *1/ */
-	/* 		return EOF; */
-	/* 	} */
-	/* } */
-
-	/* /1* Encode data *1/ */
-	/* return enc(buf, buf_len, data, len); */
+    return enc(buf, buf_len, temp_buf, len);
 }
 
 /*
@@ -566,31 +554,19 @@ static int dbg_mem_read(char *buf, size_t buf_len, address addr, size_t len, dbg
  */
 static int dbg_mem_write(const char *buf, size_t buf_len, address addr, size_t len, dbg_dec_func dec)
 {
-	if (dec(buf, buf_len, (char *)addr, len) == EOF) {
-		return EOF;
-	}
+    char temp_buf[len];
+
+    int bytes = dec(buf, buf_len, temp_buf, len);
+
+    if (bytes == EOF) {
+        return EOF;
+    }
+
+    if (!safe_memcpy((void *)addr, temp_buf, len)) {
+        return EOF;
+    }
+
     return 0;
-	/* char data[64]; */
-	/* size_t pos; */
-
-	/* if (len > sizeof(data)) { */
-	/* 	return EOF; */
-	/* } */
-
-	/* /1* Decode data *1/ */
-	/* if (dec(buf, buf_len, data, len) == EOF) { */
-	/* 	return EOF; */
-	/* } */
-
-	/* /1* Write to system memory *1/ */
-	/* for (pos = 0; pos < len; pos++) { */
-	/* 	if (dbg_sys_mem_writeb(addr+pos, data[pos])) { */
-	/* 		/1* Failed to write *1/ */
-	/* 		return EOF; */
-	/* 	} */
-	/* } */
-
-	/* return 0; */
 }
 
 /*****************************************************************************

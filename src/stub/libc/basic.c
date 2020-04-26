@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "libc.h"
+#include <stdbool.h>
 #include <machine/arch/libc.h>
 
 void *memcpy(void *dst, const void *src, size_t n)
@@ -131,5 +133,18 @@ unsigned short htons(unsigned short hostshort) {
     hostshort = swap16(hostshort);
 #endif
     return hostshort;
+}
+
+bool safe_memcpy(void *dst, const void *src, size_t n) {
+    // test that the first and last bytes of src are readable, and the
+    // first and last bytes of dst are writeable
+    
+    if (test_address((unsigned long)src, false) && test_address((unsigned long)src + n, false) && 
+        test_address((unsigned long)dst, true) && test_address((unsigned long)dst + n, true)) {
+        memcpy(dst, src, n);
+        return true;
+    }
+
+    return false;
 }
 

@@ -6,6 +6,7 @@
 #include <core/log.h>
 #include <arm_acle.h>
 #include "libc.h"
+#include "abort.h"
 
 unsigned int convert_code_data_32(unsigned int val) {
 #if CODE_ENDIAN != DATA_ENDIAN
@@ -60,5 +61,31 @@ void arch_cache_flush() {
     // for new ARM (7+) we can try dsb + isb (https://blog.senr.io/blog/why-is-my-perfectly-good-shellcode-not-working-cache-coherency-on-mips-and-arm)
     __arm_mcr(15, 0, 0, 7, 10, 4); // ensure all memory stores are complete
     __arm_mcr(15, 0, 0, 7, 5, 4); // flush entire icache
+}
+
+bool arch_test_address(unsigned long address, bool write) {
+    unsigned char *ptr = (unsigned char *)address;
+
+    g_abort_memory_test_active = true;
+    g_abort_memory_test_got_fault = false;
+
+    // since the abort exceptions modify LR, I backup it so we can
+    // restore it later
+    unsigned long lr;
+    asm("STR LR, %0" :: "m" (lr));
+
+    unsigned char val = *ptr;
+    if (write) {
+        *ptr = val;
+    }
+    
+    asm("LDR LR, %0" : "=m" (lr));
+
+    bool result = g_abort_memory_test_got_fault;
+    g_abort_memory_test_active = false;
+    g_abort_memory_test_got_fault = false;
+
+
+    return !result; // return true if the address is okay
 }
 

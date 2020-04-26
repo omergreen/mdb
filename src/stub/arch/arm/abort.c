@@ -6,6 +6,9 @@
 #include <stdbool.h>
 #include <core/log.h>
 
+bool g_abort_memory_test_active = false;
+bool g_abort_memory_test_got_fault = false;
+
 void install_abort_ivt_handlers() {
     // TODO: consider moving the vector table somewhere else if it's read only
     unsigned long *ivt = (unsigned long *)determine_ivt();
@@ -35,12 +38,15 @@ bool fsr_is_debug_event(unsigned long fsr) {
     }
 }
 
-bool data_abort_handler(bool *skip_handling_abort) {
+bool data_abort_handler(bool *skip_handling_abort, unsigned long *address) {
     unsigned long dfsr = __arm_mrc(15, 0, 5, 0, 0); // read dfsr
 
     if (!fsr_is_debug_event(dfsr)) { // validate_dfsr
         // did we get here while checking memory?
-        if (false) {
+        if (g_abort_memory_test_active) {
+            g_abort_memory_test_got_fault = true; // mark that the memory test failed and return without 
+                                                  // passing control to core
+            *address += 4; // skip the instruction
             return false;
         }
         else {
@@ -77,7 +83,7 @@ unsigned long abort_handler(unsigned long address, unsigned long sp, bool is_pre
         }
     }
     else {
-        if (!data_abort_handler(&skip_handling_abort)) {
+        if (!data_abort_handler(&skip_handling_abort, &address)) {
             return address;
         }
     }
