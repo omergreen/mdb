@@ -4,11 +4,21 @@
 
 #include "breakpoint.h"
 #include "registers.h"
+#include "abort.h"
 #include <core/log.h>
 #include <libc/libc.h>
 #include <core/state.h>
 #include <arm_acle.h>
 #include "get_next_pc/get_next_pc.h"
+
+void arm_breakpoint_handler(unsigned int address, struct registers_from_stub *regs) {
+    registers_get_from_stub(&g_state.regs, regs, address);
+
+    // pass control to the core
+    breakpoint_handler();
+
+    registers_update_to_stub(&g_state.regs, regs);
+}
 
 /*
  * Called directly from the breakpoint stub, this function parses the stack to get the register state
@@ -17,13 +27,8 @@
 __attribute__((noreturn)) static void jump_breakpoint_handler(unsigned int address, unsigned int sp) {
     DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", address, sp);
 
-    struct registers_from_stub *regs = (struct registers_from_stub *)sp;
-    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, address);
+    arm_breakpoint_handler(address, (struct registers_from_stub *)sp);
 
-    // give control to the core
-    breakpoint_handler();
-
-    registers_update_to_stub(&g_state.regs, regs);
     jump_breakpoint_epilogue(g_state.regs.pc, sp);
 }
 
@@ -95,19 +100,7 @@ void ivt_breakpoint_init_handler() {
         return;
     }
 
-    // TODO: consider moving the vector table somewhere else if it's read only
-    //
-    unsigned long *ivt = (unsigned long *)determine_ivt();
-
-    // we modify both the relevant vector (prefetch abort occurs on BKPT or debug registers)
-    // and another one which is unused in all modes except hypervisor, to allow far jumps
-    // also, we modify the data abort vector and the reset vector to allow us to catch data aborts
-    // as well (for example, for making safe memcpys)
-    ivt[0] = (unsigned long)&data_abort_interrupt_handler; // reset vector - hopefully no one will need this?
-    ivt[5] = (unsigned long)&prefetch_abort_interrupt_handler; // not used
-
-    ivt[3] = convert_code_data_32(0xe59ff000); // prefetch abort - ldr pc, [pc]
-    ivt[4] = convert_code_data_32(0xe51ff018); // data abort - ldr pc, [pc-24]
+    install_abort_ivt_handlers();
 }
 
 static bool ivt_init = false;
@@ -137,83 +130,5 @@ bool arch_hardware_breakpoint_enable(struct breakpoint *bp) {
 }
 
 void arch_hardware_breakpoint_disable(struct breakpoint *bp) {
-}
-
-
-// check that the FSR indicates a debug event
-bool fsr_is_debug_event(unsigned long fsr) {
-    if (fsr & (1 << 9)) { // long-description translation table
-        int fault_status = fsr & 0x3f; // bits 5-0
-
-        return fault_status == 0b100010; // debug event
-    }
-    else {
-        int fault_status = ((fsr & (1 << 10)) >> 6) | (fsr & 0xf); // bit 10 + bit 3-0
-
-        return fault_status == 0b00010; // debug event
-    }
-}
-
-bool data_abort_handler(bool *skip_handling_abort) {
-    unsigned long dfsr = __arm_mrc(15, 0, 5, 0, 0); // read dfsr
-
-    if (!fsr_is_debug_event(dfsr)) { // validate_dfsr
-        // did we get here while checking memory?
-        if (false) {
-            return false;
-        }
-        else {
-            // we got here because of some fault that wasn't ours
-            // TODO: jump to original handler
-            target_log("uncaught data abort");
-            while (1) ;
-        }
-    }
-
-    return true;
-}
-
-bool prefetch_abort_handler(bool *skip_handling_abort) {
-    unsigned long ifsr = __arm_mrc(15, 0, 5, 0, 1); // read ifsr
-
-    if (!fsr_is_debug_event(ifsr)) { // validate_ifsr
-        // we got here because of some fault that wasn't ours
-        // TODO: jump to original handler
-        target_log("uncaught prefetch abort\n");
-        while (1) ;
-    }
-
-    return true;
-}
-
-unsigned long abort_handler(unsigned long address, unsigned long sp, bool is_prefetch_abort) {
-    unsigned long ivt = determine_ivt();
-
-    bool skip_handling_abort = false;
-    if (is_prefetch_abort) {
-        if (!prefetch_abort_handler(&skip_handling_abort)) {
-            return address;
-        }
-    }
-    else {
-        if (!data_abort_handler(&skip_handling_abort)) {
-            return address;
-        }
-    }
-
-    if (!breakpoint_exists(address)) {
-        target_log("debug event without a breakpoint (is_prefetch_abort=%d, address=0x%08x)\n", is_prefetch_abort, address);
-        return address;
-    }
-
-    struct registers_from_stub *regs = (struct registers_from_stub *)sp;
-    registers_get_from_stub(&g_state.regs, (struct registers_from_stub *)sp, address);
-
-    // pass control to the core
-    breakpoint_handler();
-
-    registers_update_to_stub(&g_state.regs, regs);
-
-    return g_state.regs.pc;
 }
 

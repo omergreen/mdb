@@ -15,6 +15,7 @@ static struct breakpoint *find_breakpoint(unsigned int address) {
 
 void breakpoint_handler() {
     // do more breakpoint specific stuff?
+    // TODO: check for reentrancy 
     core_loop();
 }
 
