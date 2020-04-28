@@ -711,6 +711,8 @@ enum action gdbstub()
 
     int signum = 5; // TODO: ??
 
+    // TODO: detect when the gdb was disconneted and handle it without spamming
+
     // on the first time we talk with gdb, he doesn't expect to get a signal packet
     // on the next time we stop, it would be after a "c" or an "s" command, it would expect
     // to get a signal packet in return
