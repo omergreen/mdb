@@ -38,6 +38,9 @@ unsigned short htons(unsigned short hostshort);
 // dst is writeable
 bool safe_memcpy(void *dst, const void *src, size_t n);
 
+#define ENDIAN_BIG (0)
+#define ENDIAN_LITTLE (1)
+
 #ifdef OVERRIDE_ARCH_CACHE_FLUSH
 #define cache_flush target_cache_flush
 #else

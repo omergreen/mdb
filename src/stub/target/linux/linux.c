@@ -105,6 +105,8 @@ void sigaction_handler(int sig, siginfo_t *info, void *ucontext) {
 
 #ifdef ARCH_ARM
     memcpy(&g_state.regs.r0, &c->uc_mcontext.arm_r0, sizeof(g_state.regs));
+#elif ARCH_MIPS
+
 #else
 #error "unimplemented"
 #endif

@@ -3,6 +3,7 @@
  */
 
 #pragma once
+#include <libc/libc.h>
 
 /*
  * If needed, reverse the endianness of a 32-bit integer to convert
@@ -31,9 +32,6 @@ void cache_flush();
 #define IS_THUMB_ADDR(addr)    ((addr) & 1)
 #define MAKE_THUMB_ADDR(addr)  ((addr) | 1)
 #define UNMAKE_THUMB_ADDR(addr) ((addr) & ~1)
-
-#define ENDIAN_BIG (0)
-#define ENDIAN_LITTLE (1)
 
 #ifdef ARM_BIG_ENDIAN
     #define DATA_ENDIAN ENDIAN_BIG
