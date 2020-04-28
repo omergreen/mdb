@@ -33,7 +33,7 @@ unsigned int build_jump(unsigned int from, unsigned int to) {
     return convert_code_data_32(jump);
 }
 
-void raise(int sig) { // needed for the ARM div functions
+int raise(int sig) { // needed for the ARM div functions
     target_log("sig %d was raised\n", sig);
     asm(".word 0xffffffff");
 }
@@ -57,7 +57,7 @@ unsigned long determine_ivt() {
     return 0;
 }
 
-void arch_cache_flush() {
+void arch_cache_flush(void *start, unsigned int length) {
     // for new ARM (7+) we can try dsb + isb (https://blog.senr.io/blog/why-is-my-perfectly-good-shellcode-not-working-cache-coherency-on-mips-and-arm)
     __arm_mcr(15, 0, 0, 7, 10, 4); // ensure all memory stores are complete
     __arm_mcr(15, 0, 0, 7, 5, 4); // flush entire icache
