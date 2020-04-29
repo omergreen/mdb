@@ -686,7 +686,7 @@ bool send_target_xml(int offset, int length) {
 
     char packet[1 + length]; // don't care about vulnerabilities
     packet[0] = 'm';
-    memcpy(packet + 1, target_xml_start, length);
+    memcpy(packet + 1, target_xml_start + offset, length);
     
     dbg_send_packet(packet, sizeof(packet));
     return true;
