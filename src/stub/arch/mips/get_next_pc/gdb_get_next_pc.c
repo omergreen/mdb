@@ -70,6 +70,52 @@
 #define b11s5_reg(x) (((x) >> 11) & 0x1f)
 #define b12s4_op(x) (((x) >> 12) & 0xf)
 
+/* Table to translate 3-bit register field to actual register number.  */
+static const signed char mips_reg3_to_reg[8] = { 16, 17, 2, 3, 4, 5, 6, 7 };
+
+/* Decoding the next place to set a breakpoint is irregular for the
+   mips 16 variant, but fortunately, there fewer instructions.  We have
+   to cope ith extensions for 16 bit instructions and a pair of actual
+   32 bit instructions.  We dont want to set a single step instruction
+   on the extend instruction either.  */
+
+/* Lots of mips16 instruction formats */
+/* Predicting jumps requires itype,ritype,i8type
+   and their extensions      extItype,extritype,extI8type.  */
+enum mips16_inst_fmts
+{
+  itype,			/* 0  immediate 5,10 */
+  ritype,			/* 1   5,3,8 */
+  rrtype,			/* 2   5,3,3,5 */
+  rritype,			/* 3   5,3,3,5 */
+  rrrtype,			/* 4   5,3,3,3,2 */
+  rriatype,			/* 5   5,3,3,1,4 */
+  shifttype,			/* 6   5,3,3,3,2 */
+  i8type,			/* 7   5,3,8 */
+  i8movtype,			/* 8   5,3,3,5 */
+  i8mov32rtype,			/* 9   5,3,5,3 */
+  i64type,			/* 10  5,3,8 */
+  ri64type,			/* 11  5,3,3,5 */
+  jalxtype,			/* 12  5,1,5,5,16 - a 32 bit instruction */
+  exiItype,			/* 13  5,6,5,5,1,1,1,1,1,1,5 */
+  extRitype,			/* 14  5,6,5,5,3,1,1,1,5 */
+  extRRItype,			/* 15  5,5,5,5,3,3,5 */
+  extRRIAtype,			/* 16  5,7,4,5,3,3,1,4 */
+  EXTshifttype,			/* 17  5,5,1,1,1,1,1,1,5,3,3,1,1,1,2 */
+  extI8type,			/* 18  5,6,5,5,3,1,1,1,5 */
+  extI64type,			/* 19  5,6,5,5,3,1,1,1,5 */
+  extRi64type,			/* 20  5,6,5,5,3,3,5 */
+  extshift64type		/* 21  5,5,1,1,1,1,1,1,5,1,1,1,3,5 */
+};
+/* I am heaping all the fields of the formats into one structure and
+   then, only the fields which are involved in instruction extension.  */
+struct upk_mips16
+{
+  CORE_ADDR offset;
+  unsigned int regx;		/* Function in i8 type.  */
+  unsigned int regy;
+};
+
 static LONGEST
 mips32_relative_offset (ULONGEST inst)
 {
@@ -158,12 +204,6 @@ unmake_compact_addr (CORE_ADDR addr)
   return ((addr) & ~(CORE_ADDR) 1);
 }
 
-/* enum bfd_endian */
-/* gdbarch_byte_order (struct gdbarch *gdbarch) */
-/* { */
-/*   return gdbarch->byte_order; */
-/* } */
-
 static ULONGEST
 mips_fetch_instruction (struct gdbarch *gdbarch,
 			enum mips_isa isa, CORE_ADDR addr, int *errp)
@@ -191,6 +231,129 @@ mips_fetch_instruction (struct gdbarch *gdbarch,
   /* memcpy ((void *)addr, buf, instlen); */
   /* return extract_unsigned_integer (buf, instlen, byte_order); */
 }
+
+/* Only call this function if you know that this is an extendable
+   instruction.  It won't malfunction, but why make excess remote memory
+   references?  If the immediate operands get sign extended or something,
+   do it after the extension is performed.  */
+/* FIXME: Every one of these cases needs to worry about sign extension
+   when the offset is to be used in relative addressing.  */
+
+static unsigned int
+fetch_mips_16 (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  /* enum bfd_endian byte_order = gdbarch_byte_order (gdbarch); */
+  /* gdb_byte buf[8]; */
+
+  pc = unmake_compact_addr (pc);	/* Clear the low order bit.  */
+  return (unsigned int)(*(unsigned short *)pc);
+  /* target_read_memory (pc, buf, 2); */
+  /* return extract_unsigned_integer (buf, 2, byte_order); */
+}
+
+/* The EXT-I, EXT-ri nad EXT-I8 instructions all have the same format
+   for the bits which make up the immediate extension.  */
+
+static CORE_ADDR
+extended_offset (unsigned int extension)
+{
+  CORE_ADDR value;
+
+  value = (extension >> 16) & 0x1f;	/* Extract 15:11.  */
+  value = value << 6;
+  value |= (extension >> 21) & 0x3f;	/* Extract 10:5.  */
+  value = value << 5;
+  value |= extension & 0x1f;		/* Extract 4:0.  */
+
+  return value;
+}
+
+/* Calculate the destination of a branch whose 16-bit opcode word is at PC,
+   and having a signed 16-bit OFFSET.  */
+
+static CORE_ADDR
+add_offset_16 (CORE_ADDR pc, int offset)
+{
+  return pc + (offset << 1) + 2;
+}
+
+static void
+unpack_mips16 (struct gdbarch *gdbarch, CORE_ADDR pc,
+	       unsigned int extension,
+	       unsigned int inst,
+	       enum mips16_inst_fmts insn_format, struct upk_mips16 *upk)
+{
+  CORE_ADDR offset;
+  int regx;
+  int regy;
+  switch (insn_format)
+  {
+    case itype:
+      {
+        CORE_ADDR value;
+        if (extension)
+        {
+          value = extended_offset ((extension << 16) | inst);
+          value = (value ^ 0x8000) - 0x8000;		/* Sign-extend.  */
+        }
+        else
+        {
+          value = inst & 0x7ff;
+          value = (value ^ 0x400) - 0x400;		/* Sign-extend.  */
+        }
+        offset = value;
+        regx = -1;
+        regy = -1;
+      }
+      break;
+    case ritype:
+    case i8type:
+      {				/* A register identifier and an offset.  */
+        /* Most of the fields are the same as I type but the
+           immediate value is of a different length.  */
+        CORE_ADDR value;
+        if (extension)
+        {
+          value = extended_offset ((extension << 16) | inst);
+          value = (value ^ 0x8000) - 0x8000;		/* Sign-extend.  */
+        }
+        else
+        {
+          value = inst & 0xff;			/* 8 bits */
+          value = (value ^ 0x80) - 0x80;		/* Sign-extend.  */
+        }
+        offset = value;
+        regx = (inst >> 8) & 0x07;			/* i8 funct */
+        regy = -1;
+        break;
+      }
+    case jalxtype:
+      {
+        unsigned long value;
+        unsigned int nexthalf;
+        value = ((inst & 0x1f) << 5) | ((inst >> 5) & 0x1f);
+        value = value << 16;
+        nexthalf = mips_fetch_instruction (gdbarch, ISA_MIPS16, pc + 2, NULL);
+        /* Low bit still set.  */
+        value |= nexthalf;
+        offset = value;
+        regx = -1;
+        regy = -1;
+        break;
+      }
+    default:
+      break;
+  }
+  upk->offset = offset;
+  upk->regx = regx;
+  upk->regy = regy;
+}
+
+/* enum bfd_endian */
+/* gdbarch_byte_order (struct gdbarch *gdbarch) */
+/* { */
+/*   return gdbarch->byte_order; */
+/* } */
 
 CORE_ADDR
 mips32_next_pc (struct regcache *regcache, CORE_ADDR pc)
@@ -389,3 +552,116 @@ greater_branch:	/* BGTZ, BGTZL */
   }				/* else */
   return pc;
 }				/* mips32_next_pc */
+
+static CORE_ADDR
+extended_mips16_next_pc (struct regcache *regcache, CORE_ADDR pc,
+			 unsigned int extension, unsigned int insn)
+{
+  struct gdbarch *gdbarch = regcache->arch;
+  int op = (insn >> 11);
+  switch (op)
+  {
+    case 2:			/* Branch */
+      {
+        struct upk_mips16 upk;
+        unpack_mips16 (gdbarch, pc, extension, insn, itype, &upk);
+        pc = add_offset_16 (pc, upk.offset);
+        break;
+      }
+    case 3:			/* JAL , JALX - Watch out, these are 32 bit
+                   instructions.  */
+      {
+        struct upk_mips16 upk;
+        unpack_mips16 (gdbarch, pc, extension, insn, jalxtype, &upk);
+        pc = ((pc + 2) & (~(CORE_ADDR) 0x0fffffff)) | (upk.offset << 2);
+        if ((insn >> 10) & 0x01)	/* Exchange mode */
+          pc = pc & ~0x01;	/* Clear low bit, indicate 32 bit mode.  */
+        else
+          pc |= 0x01;
+        break;
+      }
+    case 4:			/* beqz */
+      {
+        struct upk_mips16 upk;
+        int reg;
+        unpack_mips16 (gdbarch, pc, extension, insn, ritype, &upk);
+        reg = regcache_raw_get_signed (regcache, mips_reg3_to_reg[upk.regx]);
+        if (reg == 0)
+          pc = add_offset_16 (pc, upk.offset);
+        else
+          pc += 2;
+        break;
+      }
+    case 5:			/* bnez */
+      {
+        struct upk_mips16 upk;
+        int reg;
+        unpack_mips16 (gdbarch, pc, extension, insn, ritype, &upk);
+        reg = regcache_raw_get_signed (regcache, mips_reg3_to_reg[upk.regx]);
+        if (reg != 0)
+          pc = add_offset_16 (pc, upk.offset);
+        else
+          pc += 2;
+        break;
+      }
+    case 12:			/* I8 Formats btez btnez */
+      {
+        struct upk_mips16 upk;
+        int reg;
+        unpack_mips16 (gdbarch, pc, extension, insn, i8type, &upk);
+        /* upk.regx contains the opcode */
+        /* Test register is 24 */
+        reg = regcache_raw_get_signed (regcache, 24);
+        if (((upk.regx == 0) && (reg == 0))	/* BTEZ */
+            || ((upk.regx == 1) && (reg != 0)))	/* BTNEZ */
+          pc = add_offset_16 (pc, upk.offset);
+        else
+          pc += 2;
+        break;
+      }
+    case 29:			/* RR Formats JR, JALR, JALR-RA */
+      {
+        struct upk_mips16 upk;
+        /* upk.fmt = rrtype; */
+        op = insn & 0x1f;
+        if (op == 0)
+        {
+          int reg;
+          upk.regx = (insn >> 8) & 0x07;
+          upk.regy = (insn >> 5) & 0x07;
+          if ((upk.regy & 1) == 0)
+            reg = mips_reg3_to_reg[upk.regx];
+          else
+            reg = 31;		/* Function return instruction.  */
+          pc = regcache_raw_get_signed (regcache, reg);
+        }
+        else
+          pc += 2;
+        break;
+      }
+    case 30:
+      /* This is an instruction extension.  Fetch the real instruction
+         (which follows the extension) and decode things based on
+         that.  */
+      {
+        pc += 2;
+        pc = extended_mips16_next_pc (regcache, pc, insn,
+            fetch_mips_16 (gdbarch, pc));
+        break;
+      }
+    default:
+      {
+        pc += 2;
+        break;
+      }
+  }
+  return pc;
+}
+
+static CORE_ADDR
+mips16_next_pc (struct regcache *regcache, CORE_ADDR pc)
+{
+  struct gdbarch *gdbarch = regcache->arch;
+  unsigned int insn = fetch_mips_16 (gdbarch, pc);
+  return extended_mips16_next_pc (regcache, pc, 0, insn);
+}
