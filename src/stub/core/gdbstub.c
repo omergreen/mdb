@@ -686,7 +686,7 @@ bool send_target_xml(int offset, int length) {
 
     char packet[1 + length]; // don't care about vulnerabilities
     packet[0] = 'm';
-    memcpy(packet + 1, target_xml_start, length);
+    memcpy(packet + 1, target_xml_start + offset, length);
     
     dbg_send_packet(packet, sizeof(packet));
     return true;
@@ -710,6 +710,8 @@ enum action gdbstub()
 	const char *ptr_next;
 
     int signum = 5; // TODO: ??
+
+    // TODO: detect when the gdb was disconneted and handle it without spamming
 
     // on the first time we talk with gdb, he doesn't expect to get a signal packet
     // on the next time we stop, it would be after a "c" or an "s" command, it would expect
