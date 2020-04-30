@@ -11,6 +11,7 @@ unsigned int build_jump(unsigned int from, unsigned int to);
 
 // find the vector table location
 unsigned long determine_ivt();
+void create_and_move_ivt(unsigned long addr);
 
 void cache_flush();
 

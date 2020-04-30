@@ -55,7 +55,11 @@ bool arch_software_breakpoint_enable(struct breakpoint *bp) {
     }
 
     memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
-    *(unsigned int *)bp->address = 0xe1200070; // bkpt
+#ifdef TARGET_TYPE_LINUX
+    *(unsigned int *)bp->address = 0xf0000000; // some illegal instruction, gdb doesn't like us using break
+#else
+    *(unsigned int *)bp->address = 0x0000000d; // break
+#endif
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
     return true;
 }

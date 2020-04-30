@@ -76,10 +76,14 @@ void target_cache_flush(void *start, unsigned int length) { // https://github.co
 #endif
 }
 
-struct kernel_sigaction
-{
+struct kernel_sigaction {
+#ifdef ARCH_MIPS
+  unsigned long sa_flags;
+  __sighandler_t k_sa_handler;
+#else
   __sighandler_t k_sa_handler;
   unsigned long sa_flags;
+#endif
   void (*sa_restorer) (void);
   /* glibc sigset is larger than kernel expected one, however sigaction
      passes the kernel expected size on rt_sigaction syscall.  */

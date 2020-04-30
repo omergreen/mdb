@@ -37,8 +37,8 @@ __attribute__((used,section(".init"))) void _start2(void *args) {
 __attribute__((used,section(".init"))) void _start(void *args) {
 #endif
     fix_got();
-    arch_init();
     target_init(args);
+    arch_init();
 }
 
 __attribute__((always_inline,section(".init"))) static void fix_got() {
@@ -52,8 +52,8 @@ __attribute__((always_inline,section(".init"))) static void fix_got() {
 
     unsigned long *got = (unsigned long *)(start + (unsigned long)&__GOT_OFFSET);
     for (unsigned int i = 0; i < (unsigned long)&__GOT_LENGTH / sizeof(*got); ++i) {
-        if ((got[i] & (unsigned long)&__START_OF_PROGRAM_MASK) == (unsigned long)&__START_OF_PROGRAM) {
-            got[i] += start - (unsigned long)&__START_OF_PROGRAM;
+        if ((got[i] & 0xfff00000) == 0x12300000) {
+            got[i] += start - 0x12300000;
         }
     }
 }

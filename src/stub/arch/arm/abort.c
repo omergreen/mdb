@@ -9,6 +9,7 @@
 bool g_abort_memory_test_active = false;
 bool g_abort_memory_test_got_fault = false;
 
+// TODO: restore vector table on arch_cleanup
 void install_abort_ivt_handlers() {
     // TODO: consider moving the vector table somewhere else if it's read only
     unsigned long *ivt = (unsigned long *)determine_ivt();

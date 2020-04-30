@@ -106,7 +106,7 @@ void sigaction_handler(int sig, siginfo_t *info, void *ucontext) {
 #ifdef ARCH_ARM
     memcpy(&g_state.regs.r0, &c->uc_mcontext.arm_r0, sizeof(g_state.regs));
 #elif ARCH_MIPS
-
+    g_state.regs.pc = c->uc_mcontext.pc;
 #else
 #error "unimplemented"
 #endif
@@ -125,6 +125,9 @@ void target_init(void *args) {
     struct_sigaction action = { .sa_handler = NULL, .sa_sigaction = sigaction_handler, .sa_flags = SA_SIGINFO };
     sigemptyset(&action.sa_mask);
     if (sigaction(SIGILL, &action, NULL) < 0) {
+        perror("sigaction");
+    }
+    if (sigaction(SIGTRAP, &action, NULL) < 0) {
         perror("sigaction");
     }
 
