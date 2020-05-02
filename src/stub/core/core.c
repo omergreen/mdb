@@ -52,6 +52,8 @@ __attribute__((always_inline,section(".init"))) static void fix_got() {
 
     unsigned long *got = (unsigned long *)(start + (unsigned long)&__GOT_OFFSET);
     for (unsigned int i = 0; i < (unsigned long)&__GOT_LENGTH / sizeof(*got); ++i) {
+        // we can't use variables for 0x12300000 here since it would be stored in the GOT
+        // TODO then: find some better solution
         if ((got[i] & 0xfff00000) == 0x12300000) {
             got[i] += start - 0x12300000;
         }

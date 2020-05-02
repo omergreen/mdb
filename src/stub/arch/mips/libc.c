@@ -100,14 +100,15 @@ unsigned long move_ivt(unsigned long new_addr) {
     return old_ebase & ~0xfff;
 }
 
-void create_and_move_ivt(unsigned long addr) {
+void create_and_move_ivt(unsigned long addr, void *breakpoint_interrupt_handler) {
     unsigned long old_ivt = MFC0(C0_EBASE);
 
     // TLB refill at 0, cache error on 0x100, general exception on 0x180, interrupt on 0x200
     // we store old_addr - (new_addr + 12) in a word after hop_back_opcodes so that we will jump
     // to the exact same spot we would be in if we didn't switch the IVT - since stuff like cache error
     // jumps to kseg1 instead of kseg0 (0xa0000000 instead of 0x80000000)
-    unsigned int hop_back_opcodes[] = { 0x03e0d025, // move k0, ra - backup ra since we modify it
+    unsigned int hop_back_opcodes[] = { 
+                                        0x03e0d025, // move k0, ra - backup ra since we modify it
                                         0x04110001, // bal 0xc
                                         0x8ffb000c, // lw k1, 12(ra)
                                         0x037fd821, // addu k1, k1, ra
@@ -115,14 +116,46 @@ void create_and_move_ivt(unsigned long addr) {
                                         0x0340f825, // move ra, k0
                                         // .word old_addr - (new_addr + 12)
                                       };
+    assert(sizeof(hop_back_opcodes) + sizeof(unsigned int) <= 0x20);
 
-    unsigned int offsets[] = { 0, 0x100, 0x180, 0x200 };
-    for (int i = 0; i < sizeof(offsets) / sizeof(*offsets); i++) {
-        memcpy((void *)(addr + offsets[i]), hop_back_opcodes, sizeof(hop_back_opcodes));
-        *(unsigned int *)(addr + offsets[i] + sizeof(hop_back_opcodes)) = old_ivt - (addr + 12);
+    // for general exception, we first want to check if a breakpoint triggered, and if so jump
+    // to our stub. otherwise, fall back to hop_back_opcodes
+    unsigned int general_exception_opcodes[] = { 
+                                                 0x401a6800, // mfc0 k0, c0_cause
+                                                 0x001ad082, // srl k0, k0, 0x2
+                                                 0x335a001f, // andi k0, k0, 0x1f
+                                                 0x241b0009, // li k1, 9 (breakpoint)
+                                                 0x175b0006, // bne k0, k1, not_bp
+                                                 0x03e0d025, // move k0, ra
+                                                 0x04110001, // bal 1f
+                                                 0x8ffb0008, // lw k1, 8(ra)
+                                                 0x03600008, // 1: jr k1
+                                                 0x0340f825, // move ra, k0
+                                                             // .word stub_address
+                                                             // not_bp:
+                                               };
+
+    // TLB Refill at 0, cache error at 0x100, general exception at 0x180, interrupts at 0x200-0x8000
+    // the number of interrupt vectors depends on IntCTL_VS, but we prepare for the worst
+    for (int offset = 0; offset <= 0x8000; offset += 0x20) {
+        unsigned long hop_back_address = addr + offset;
+        int hop_back_offset = 12; // the bal is the second instruction -> ra = start + 12
+
+        if (offset == 0x180) {  // general exception
+            memcpy((void *)hop_back_address, general_exception_opcodes, sizeof(general_exception_opcodes));
+            *(unsigned long *)(hop_back_address + sizeof(general_exception_opcodes)) = (unsigned long)breakpoint_interrupt_handler;
+            hop_back_address += sizeof(general_exception_opcodes) + sizeof(unsigned int);
+            hop_back_offset += sizeof(general_exception_opcodes) + sizeof(unsigned int);
+        }
+
+        if (offset == 0x80) continue; // nothing there
+        if (offset < 0x200 && (offset & 0x60) != 0) continue; // below 0x200 there's a handler every 0x80 
+
+        memcpy((void *)hop_back_address, hop_back_opcodes, sizeof(hop_back_opcodes));
+        *(unsigned int *)(hop_back_address + sizeof(hop_back_opcodes)) = old_ivt - (addr + hop_back_offset);
     }
 
-    cache_flush((void *)addr, 0x280);
+    cache_flush((void *)addr, 0x8020);
     move_ivt(addr);
 }
 

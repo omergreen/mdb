@@ -4,12 +4,6 @@
 
 #pragma once
 
-/* union cpsr { // TODO: check the endianness of bits with both BE and LE */
-/*     unsigned int packed; */ 
-/*     struct __attribute__((packed)) { // https://www.keil.com/pack/doc/CMSIS/Core_A/html/group__CMSIS__CPSR.html */
-/*     } bits; */        
-/* }; */
-
 struct registers {
         unsigned int zero;
         unsigned int at;
@@ -46,10 +40,25 @@ struct registers {
         unsigned int lo;
         unsigned int hi;
         unsigned int pc;
-        /* <reg name="status" bitsize="32" regnum="32"/> */
-        /* <reg name="badvaddr" bitsize="32" regnum="35"/> */
-        /* <reg name="cause" bitsize="32" regnum="36"/> */
+
+        // cp0
+        unsigned int status;
+        unsigned int badvaddr;
+        unsigned int cause;
+         
+        // floating point
+        unsigned int floating_point_registers[32];
+        unsigned int fscr, fir;
+
+        // dsp        
+        unsigned int hi1;
+        unsigned int lo1;
+        unsigned int hi2;
+        unsigned int lo2;
+        unsigned int hi3;
+        unsigned int lo3;
+        unsigned int dspctl;
 };
 
-#define REGISTERS_LENGTH (35)
+#define REGISTERS_LENGTH (sizeof(struct registers) / sizeof(unsigned int))
 
