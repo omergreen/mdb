@@ -3,6 +3,7 @@
  */
 
 #pragma once
+#include "cp0.h"
 
 /*
  * Return a jump opcode from `from` to `to`
@@ -11,10 +12,15 @@ unsigned int build_jump(unsigned int from, unsigned int to);
 
 // find the vector table location
 unsigned long determine_ivt();
-void create_and_move_ivt(unsigned long addr, void *breakpoint_interrupt_handler);
 
 void cache_flush();
 
+unsigned long move_ivt(unsigned long new_addr);
+
+#define MFC0(specifier) ({ int out; asm volatile("mfc0 %0, " specifier : "=r"(out)); out; })
+#define MTC0(specifier, val) asm volatile("mtc0 %0, " specifier :: "r"(val));
+#define EBASE_WG (1 << 11)
+#define STATUS_BEV (1 << 22)
 
 #define IS_MIPS16_ADDR(addr)    ((addr) & 1)
 #define MAKE_MIPS16_ADDR(addr)  ((addr) | 1)

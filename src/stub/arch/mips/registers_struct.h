@@ -39,7 +39,7 @@ struct registers {
         unsigned int ra;
         unsigned int lo;
         unsigned int hi;
-        unsigned int pc;
+        unsigned int pc; // this is called EPC in linux kernel
 
         // cp0
         unsigned int status;

@@ -8,4 +8,6 @@
 #include <stdbool.h>
 #include <core/breakpoint.h>
 
+void *general_exception_handler_low;
+unsigned int general_exception_stack;
 

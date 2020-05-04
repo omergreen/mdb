@@ -26,10 +26,9 @@ asm(".global _start;\
 _start:\
      move $t0, $ra;\
      bal 1f;\
-     addiu $t9, $ra, 8;\
+     addiu $t9, $ra, 4;\
 \
-  1: b _start2;\
-     move $ra, $t0;\
+  1: move $ra, $t0;\
     ");
 extern void *_start;
 __attribute__((used,section(".init"))) void _start2(void *args) {

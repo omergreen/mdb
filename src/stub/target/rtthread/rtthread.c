@@ -87,7 +87,7 @@ void target_init(void *args) {
     _realloc = args_ptr[4];
     _free = args_ptr[5];
 
-    /* breakpoint_add((unsigned long)args_ptr[6], false, BREAKPOINT_TYPE_SOFTWARE); */
+    breakpoint_add((unsigned long)args_ptr[6], false, BREAKPOINT_TYPE_SOFTWARE);
 
     wait_for_connection();
 }
