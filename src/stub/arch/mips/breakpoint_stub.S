@@ -3,6 +3,7 @@
 
 .global general_exception_handler_low
 .global general_exception_stack
+.global general_exception_original_ivt_handler
 
 .set noat
 .set noreorder
@@ -46,19 +47,36 @@ nest_count_down: // nest_count--;
     jr $ra
     nop
 
-original_ra: .word 0
+general_exception_original_ivt_handler: .word 0
 general_exception_handler_low:
+    mfc0 $k0, CP0_CAUSE
+    andi $k0, CAUSEF_EXCCODE
+    addiu $k0, -(EXCCODE_BP << CAUSEB_EXCCODE)
+    beq $k0, $zero, handle_ourselves // check if excode == BP
+    addiu $k0, -((EXCCODE_DBE - EXCCODE_BP) << CAUSEB_EXCCODE)
+
+    beq $k0, $zero, handle_ourselves // check if excode == DBE (data bus error)
+    nop
+
+defer_to_original_ivt:
+    // otherwise, jump back to the original handler
+    LOAD_FROM_LOCAL $k0, general_exception_original_ivt_handler
+    jr $k0
+    nop
+
+original_ra: .word 0
+handle_ourselves:
     // prepare by moving to our own designated stack
-    move $k1, $ra // we can't SAVE_TO_LOCAL directly with $ra...
-    SAVE_TO_LOCAL $k1 original_ra $k0
+    move $k0, $ra // we can't SAVE_TO_LOCAL directly with $ra...
+    SAVE_TO_LOCAL $k0 original_ra $k1
 
 1:  bal nest_count_up
     nop
 
-    bne $k0, 0, save_regs // don't load our stack if we nest_count > 0
+    bne $k0, 0, save_regs // don't load our stack if nest_count > 0
     move $k0, $sp // we expect k0 to contain the frame SP later on
 
-    bal load_general_exception_stack
+    bal load_general_exception_stack // puts the old stack in k0
     nop
 
 save_regs:
@@ -126,9 +144,13 @@ save_regs:
     nop
 
     move $t9, $v0
-    bal general_exception_handler_high
     move $a0, $sp
+    bal general_exception_handler_high
+    addiu $sp, -4
 
+    move $k0, $v0 // general_exception_handler_high returns 1 if we handled the exception completely,
+                  // otherwise we want to jump later to the original handler
+    addiu $sp, 4
     bal nest_count_down
     nop
 
@@ -193,10 +215,11 @@ save_regs:
 
     addiu $sp, 148 + 41*4 // not really necessary, but for completeness's sake
 
+    beq $k0, $zero, defer_to_original_ivt
     move $sp, $k1
+
     eret
     nop // does eret even have a delay slot? not sure
-
 
 general_exception_handler_high_branch: b general_exception_handler_high
 get_general_exception_handler_high_address: // I hate mips.. we don't have any good way to calculate offsets

@@ -3,6 +3,7 @@
  */
 
 #include <target/interface.h>
+#include "breakpoint.h"
 #include <core/log.h>
 #include <libc/libc.h>
 #include <stddef.h>
@@ -93,7 +94,56 @@ unsigned long move_ivt(unsigned long new_addr) {
     return old_ebase & ~0xfff;
 }
 
+bool test_for_bus_error(unsigned long address, bool write) {
+    asm volatile("di; ehb");
+    g_memory_test_active = true;
+    g_memory_test_got_fault = false;
+
+    unsigned char *ptr = (unsigned char *)address;
+    unsigned char val = *ptr;
+    if (write) {
+        *ptr = val;
+    }
+
+    asm volatile("ei; ehb");
+
+    return !g_memory_test_got_fault;    
+}
+
 bool arch_test_address(unsigned long address, bool write) {
+    unsigned long asid = MFC0(CP0_ENTRYHI) & (MIPS_ENTRYHI_ASID | MIPS_ENTRYHI_ASIDX);
+    MTC0(CP0_ENTRYHI, (address & 0xffffe000) | asid); // page / 2 + asid (asid is some kind of page identifier)
+    asm volatile("ehb; tlbp; ehb"); // probe TLB for address
+    unsigned long index = MFC0(CP0_INDEX); 
+
+    if (address >= 0x80000000 && address < 0xc0000000) { // those addresses are always unmapped
+        return test_for_bus_error(address, write);
+    }
+
+    if (index & 0x80000000) { // P bit
+        // probe failure
+        return false;
+    }
+
+    asm volatile("tlbr; ehb"); // read the found entry
+
+    unsigned long entry;
+
+    if (address & 0x1000) { // odd page
+        entry = MFC0(CP0_ENTRYLO1);
+    }
+    else { // even page
+        entry = MFC0(CP0_ENTRYLO0);
+    }
+
+    if (!(entry & ENTRYLO_V)) { // valid == false
+        return false;
+    }
+
+    if (write && !(entry & ENTRYLO_D)) { // if we want to write and dirty == fakse
+        return false;
+    }
+
     return true;
 }
 

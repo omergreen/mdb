@@ -41,15 +41,15 @@ notice and this notice are preserved.  -->
         <reg name="r30" bitsize="32"/>
         <reg name="r31" bitsize="32"/>
 
-        <reg name="lo" bitsize="32" regnum="33"/>
-        <reg name="hi" bitsize="32" regnum="34"/>
-        <reg name="pc" bitsize="32" regnum="37"/>
+        <reg name="lo" bitsize="32" regnum="32"/>
+        <reg name="hi" bitsize="32" regnum="33"/>
+        <reg name="pc" bitsize="32" regnum="34"/>
     </feature>
 
     <feature name="org.gnu.gdb.mips.cp0">
-        <reg name="status" bitsize="32" regnum="32"/>
-        <reg name="badvaddr" bitsize="32" regnum="35"/>
-        <reg name="cause" bitsize="32" regnum="36"/>
+        <reg name="status" bitsize="32" regnum="35"/>
+        <reg name="badvaddr" bitsize="32" regnum="36"/>
+        <reg name="cause" bitsize="32" regnum="37"/>
     </feature>
 
     <feature name="org.gnu.gdb.mips.fpu">
@@ -90,15 +90,16 @@ notice and this notice are preserved.  -->
         <reg name="fir" bitsize="32" group="float"/>
     </feature>
 
-    <feature name="org.gnu.gdb.mips.dsp">
-        <reg name="hi1" bitsize="32" regnum="72"/>
-        <reg name="lo1" bitsize="32" regnum="73"/>
-        <reg name="hi2" bitsize="32" regnum="74"/>
-        <reg name="lo2" bitsize="32" regnum="75"/>
-        <reg name="hi3" bitsize="32" regnum="76"/>
-        <reg name="lo3" bitsize="32" regnum="77"/>
+    <!-- so apparently gdb will accept a target without DSP -->
+    <!-- <feature name="org.gnu.gdb.mips.dsp"> -->
+    <!--     <!-1- <reg name="hi1" bitsize="32" regnum="72"/> -1-> -->
+    <!--     <!-1- <reg name="lo1" bitsize="32" regnum="73"/> -1-> -->
+    <!--     <!-1- <reg name="hi2" bitsize="32" regnum="74"/> -1-> -->
+    <!--     <!-1- <reg name="lo2" bitsize="32" regnum="75"/> -1-> -->
+    <!--     <!-1- <reg name="hi3" bitsize="32" regnum="76"/> -1-> -->
+    <!--     <!-1- <reg name="lo3" bitsize="32" regnum="77"/> -1-> -->
 
-        <reg name="dspctl" bitsize="32" regnum="78"/>
-    </feature>
+    <!--     <!-1- <reg name="dspctl" bitsize="32" regnum="78"/> -1-> -->
+    <!-- </feature> -->
 </target>
 

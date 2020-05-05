@@ -176,3 +176,15 @@
 #define EXCCODE_DSPDIS 26 /* DSP disabled exception */
 #define EXCCODE_GE 27 /* Virtualized guest exception (VZ) */
 
+/* Generic EntryLo bit definitions */
+#define ENTRYLO_G		(_ULCAST_(1) << 0)
+#define ENTRYLO_V		(_ULCAST_(1) << 1)
+#define ENTRYLO_D		(_ULCAST_(1) << 2)
+#define ENTRYLO_C_SHIFT		3
+#define ENTRYLO_C		(_ULCAST_(7) << ENTRYLO_C_SHIFT)
+
+/* MIPS32/64 EntryHI bit definitions */
+#define MIPS_ENTRYHI_EHINV	(_ULCAST_(1) << 10)
+#define MIPS_ENTRYHI_ASIDX	(_ULCAST_(0x3) << 8)
+#define MIPS_ENTRYHI_ASID	(_ULCAST_(0xff) << 0)
+

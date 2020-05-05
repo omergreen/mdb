@@ -65,6 +65,7 @@ void arch_cache_flush(void *start, unsigned int length) {
 
 bool arch_test_address(unsigned long address, bool write) {
     unsigned char *ptr = (unsigned char *)address;
+    // TODO: disable interrupts
 
     g_abort_memory_test_active = true;
     g_abort_memory_test_got_fault = false;

@@ -37,11 +37,12 @@ struct registers {
         unsigned int sp;
         unsigned int fp;
         unsigned int ra;
+
         unsigned int lo;
         unsigned int hi;
-        unsigned int pc; // this is called EPC in linux kernel
 
         // cp0
+        unsigned int pc; // this is actually EPC
         unsigned int status;
         unsigned int badvaddr;
         unsigned int cause;
@@ -50,14 +51,15 @@ struct registers {
         unsigned int floating_point_registers[32];
         unsigned int fscr, fir;
 
-        // dsp        
-        unsigned int hi1;
-        unsigned int lo1;
-        unsigned int hi2;
-        unsigned int lo2;
-        unsigned int hi3;
-        unsigned int lo3;
-        unsigned int dspctl;
+        // so apparently gdb will accept a target without DSP
+        /* // dsp */        
+        /* unsigned int hi1; */
+        /* unsigned int lo1; */
+        /* unsigned int hi2; */
+        /* unsigned int lo2; */
+        /* unsigned int hi3; */
+        /* unsigned int lo3; */
+        /* unsigned int dspctl; */
 };
 
 #define REGISTERS_LENGTH (sizeof(struct registers) / sizeof(unsigned int))

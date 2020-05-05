@@ -8,6 +8,10 @@
 #include <stdbool.h>
 #include <core/breakpoint.h>
 
-void *general_exception_handler_low;
-unsigned int general_exception_stack;
+extern void *general_exception_handler_low;
+extern unsigned int general_exception_stack;
+extern unsigned int general_exception_original_ivt_handler;
+
+extern bool g_memory_test_active;
+extern bool g_memory_test_got_fault;
 

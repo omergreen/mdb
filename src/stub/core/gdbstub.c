@@ -703,7 +703,7 @@ bool first_time = true;
 enum action gdbstub()
 {
 	address     addr;
-	char        pkt_buf[256];
+	char        pkt_buf[1024];
 	int         status;
 	size_t      length;
 	size_t      pkt_len;
@@ -921,7 +921,7 @@ enum action gdbstub()
         case 'q':
             if (starts_with_token(pkt_buf + 1, "Supported")) {
                 // throw out the packet for now, but answer that we support target description
-                char packet[] = "PacketSize=1000;qXfer:features:read+;QStartNoAckMode+"; // copied from qemu's response
+                char packet[] = "PacketSize=500;qXfer:features:read+;QStartNoAckMode+"; // copied from qemu's response
                 dbg_send_packet(packet, strlen(packet));
             }
             else if (starts_with_token(pkt_buf + 1, "Xfer:features:read:target.xml:")) {

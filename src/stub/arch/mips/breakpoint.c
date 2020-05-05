@@ -7,9 +7,13 @@
 #include "registers.h"
 /* #include "abort.h" */
 #include <core/log.h>
+#include "cp0.h"
 #include <libc/libc.h>
 #include <core/state.h>
 #include "get_next_pc/get_next_pc.h"
+
+bool g_memory_test_active = false;
+bool g_memory_test_got_fault = false;
 
 bool init_general_exception_handler();
 
@@ -71,11 +75,35 @@ bool arch_hardware_breakpoint_enable(struct breakpoint *bp) {
 void arch_hardware_breakpoint_disable(struct breakpoint *bp) {
 }
 
-void general_exception_handler_high(struct registers *regs) {
-    memcpy(&g_state.regs, regs, sizeof(*regs));
+// high-level handler for general exceptions
+// returns whether we have handled the exception ourself - if false
+// is returned, we expect that we'll let the original IVT handle it
+bool general_exception_handler_high(struct registers *regs) {
+    int exccode = (regs->cause & CAUSEF_EXCCODE) >> CAUSEB_EXCCODE;
 
-    DEBUG("we're in exception");
-    breakpoint_remove(regs->pc);
+    if (exccode == EXCCODE_DBE) { // data bus error
+        if (g_memory_test_active) {
+            if (regs->cause & CAUSEF_BD) {
+                ERROR("memory test got bus error in delay slot");
+                return false; // let original handle it
+            }
+
+            g_memory_test_got_fault = true;
+            regs->pc += 4;
+            return true; // we handled it
+        }
+    
+        return false; // let original handle it
+    }
+    else if (exccode == EXCCODE_BP) {
+        memcpy(&g_state.regs, regs, sizeof(*regs));
+        breakpoint_handler();
+        return true; // we handled it
+    }
+    else {
+        ERROR("we shouldn't have got here");
+        return false;
+    }
 }
 
 void create_and_move_ivt(unsigned long addr) {
@@ -87,7 +115,7 @@ void create_and_move_ivt(unsigned long addr) {
     // jumps to kseg1 instead of kseg0 (0xa0000000 instead of 0x80000000)
     unsigned int hop_back_opcodes[] = { 
                                         0x03e0d025, // move k0, ra - backup ra since we modify it
-                                        0x04110001, // bal 0xc
+                                        0x04110001, // bal . + 8
                                         0x8ffb000c, // lw k1, 12(ra)
                                         0x037fd821, // addu k1, k1, ra
                                         0x03600008, // jr k1
@@ -99,18 +127,12 @@ void create_and_move_ivt(unsigned long addr) {
     // for general exception, we first want to check if a breakpoint triggered, and if so jump
     // to our stub. otherwise, fall back to hop_back_opcodes
     unsigned int general_exception_opcodes[] = { 
-                                                 0x401a6800, // mfc0 k0, c0_cause
-                                                 0x001ad082, // srl k0, k0, 0x2
-                                                 0x335a001f, // andi k0, k0, 0x1f
-                                                 0x241b0009, // li k1, 9 (breakpoint)
-                                                 0x175b0006, // bne k0, k1, not_bp
-                                                 0x03e0d025, // move k0, ra
-                                                 0x04110001, // bal 1f
+                                                 0x03e0d025, // move k0, ra - backup ra since we modify it
+                                                 0x04110001, // bal . + 8
                                                  0x8ffb0008, // lw k1, 8(ra)
-                                                 0x03600008, // 1: jr k1
+                                                 0x03600008, // jr k1
                                                  0x0340f825, // move ra, k0
-                                                             // .word stub_address
-                                                             // not_bp:
+                                                 (unsigned int)&general_exception_handler_low,
                                                };
 
     // TLB Refill at 0, cache error at 0x100, general exception at 0x180, interrupts at 0x200-0x8000
@@ -121,9 +143,8 @@ void create_and_move_ivt(unsigned long addr) {
 
         if (offset == 0x180) {  // general exception
             memcpy((void *)hop_back_address, general_exception_opcodes, sizeof(general_exception_opcodes));
-            *(unsigned long *)(hop_back_address + sizeof(general_exception_opcodes)) = (unsigned long)&general_exception_handler_low;
-            hop_back_address += sizeof(general_exception_opcodes) + sizeof(unsigned int);
-            hop_back_offset += sizeof(general_exception_opcodes) + sizeof(unsigned int);
+            *&general_exception_original_ivt_handler = old_ivt + 0x180;
+            continue;
         }
 
         if (offset == 0x80) continue; // nothing there
