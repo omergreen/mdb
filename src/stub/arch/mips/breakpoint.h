@@ -1,6 +1,6 @@
 /*
- * Inner functions required for ARM breakpoints
- * jump_breakpoint_stub* are implemented in assembly in breakpoint_stub.S
+ * Inner functions for mips breakpoints
+ * general_exception_handler_low is implemented in breakpoint_stub.S
  */
 
 #pragma once

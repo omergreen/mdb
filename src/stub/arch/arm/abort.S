@@ -1,3 +1,12 @@
+/*
+ * This file contains the actual abort handlers.
+ * We need to split prefetch and data aborts to two separate handlers
+ * because we don't have any way of telling them apart once they execute
+ * the same function.
+ * Since SP is banked we don't need to switch to our own stack (assuming 
+ * that the OS actually initialized it).
+ */
+
 .global data_abort_interrupt_handler
 .global prefetch_abort_interrupt_handler
 
@@ -28,6 +37,7 @@ data_abort_interrupt_handler:
 
 // TODO: check if sp is 0 (i.e. no one initialized our stack) and do something
 abort_interrupt_handler:
+    // R0 contains 1 if we are on a prefetch abort, otherwise 0
     STR LR, abort_interrupt_handler_abort_pc
 
     // remember that SP here points to the _abort_ stack
@@ -79,3 +89,4 @@ abort_interrupt_handler_system_lr: .word 0
 abort_interrupt_handler_system_sp: .word 0
 abort_interrupt_handler_return_address: .word 0
 abort_interrupt_handler_is_prefetch_abort: .word 0
+

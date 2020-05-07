@@ -1,5 +1,5 @@
 /*
- * General functions related to the ARM architecture
+ * General functions related to the mips architecture
  */
 
 #pragma once

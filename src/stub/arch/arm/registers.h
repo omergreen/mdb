@@ -7,6 +7,8 @@
 #include <core/breakpoint.h>
 #include "registers_struct.h"
 
+// TODO: rearrange stubs so we don't need registers_from_stub, like in mips
+
 struct registers_from_stub {
    unsigned int cpsr;
    unsigned int sp;

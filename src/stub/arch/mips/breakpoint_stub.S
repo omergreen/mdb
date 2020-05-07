@@ -225,6 +225,7 @@ general_exception_handler_high_branch: b general_exception_handler_high
 get_general_exception_handler_high_address: // I hate mips.. we don't have any good way to calculate offsets
                                             // since it won't let us subtract symbols in different object files
                                             // even not with %lo
+                                            // So my solution is to extract the offset from the branch opcode
     move $a0, $ra
     bal a
     lw $v0, %lo(general_exception_handler_high_branch - a)($ra)

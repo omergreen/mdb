@@ -665,3 +665,4 @@ mips16_next_pc (struct regcache *regcache, CORE_ADDR pc)
   unsigned int insn = fetch_mips_16 (gdbarch, pc);
   return extended_mips16_next_pc (regcache, pc, 0, insn);
 }
+

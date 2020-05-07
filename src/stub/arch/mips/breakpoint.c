@@ -17,27 +17,6 @@ bool g_memory_test_got_fault = false;
 
 bool init_general_exception_handler();
 
-void arm_breakpoint_handler(unsigned int address, struct registers_from_stub *regs) {
-    registers_get_from_stub(&g_state.regs, regs, address);
-
-    // pass control to the core
-    breakpoint_handler();
-
-    registers_update_to_stub(&g_state.regs, regs);
-}
-
-/*
- * Called directly from the breakpoint stub, this function parses the stack to get the register state
- * and then gives control to the core.
- */
-__attribute__((noreturn)) static void jump_breakpoint_handler(unsigned int address, unsigned int sp) {
-    DEBUG("breakpoint jumped from 0x%08x with sp 0x%08x", address, sp);
-
-    arm_breakpoint_handler(address, (struct registers_from_stub *)sp);
-
-    /* jump_breakpoint_epilogue(g_state.regs.pc, sp); */
-}
-
 bool arch_jump_breakpoint_enable(struct breakpoint *bp) {
     return false;
 }
@@ -76,7 +55,7 @@ void arch_hardware_breakpoint_disable(struct breakpoint *bp) {
 }
 
 // high-level handler for general exceptions
-// returns whether we have handled the exception ourself - if false
+// returns whether we have handled the exception ourselves - if false
 // is returned, we expect that we'll let the original IVT handle it
 bool general_exception_handler_high(struct registers *regs) {
     int exccode = (regs->cause & CAUSEF_EXCCODE) >> CAUSEB_EXCCODE;
@@ -95,7 +74,7 @@ bool general_exception_handler_high(struct registers *regs) {
     
         return false; // let original handle it
     }
-    else if (exccode == EXCCODE_BP) {
+    else if (exccode == EXCCODE_BP) { // breakpoint
         memcpy(&g_state.regs, regs, sizeof(*regs));
         breakpoint_handler();
         return true; // we handled it

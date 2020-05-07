@@ -17,6 +17,6 @@ pc_list arch_get_next_pc() {
     CORE_ADDR next_pc = mips32_next_pc (&regcache, g_state.regs.pc);
     cvector_push_back(next_pcs, next_pc);
 
-   return next_pcs;
+    return next_pcs;
 }
 

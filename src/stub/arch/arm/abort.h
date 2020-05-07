@@ -1,3 +1,9 @@
+/*
+ * abort.c and abort.S contains the logic that overrides the prefetch and data abort
+ * handlers in order to handle them ourselves (prefetch for breakpoints, data aborts to
+ * make sure we don't crash because the gdb user decided to read from 0xffffffff
+ */
+
 #pragma once
 
 #include <stdbool.h>

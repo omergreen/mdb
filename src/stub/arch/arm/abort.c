@@ -1,3 +1,8 @@
+/*
+ * This file deals with the higher-level interrupt handling, after the low-level
+ * stub in abort.S
+ */
+
 #include <arm_acle.h>
 #include <core/state.h>
 #include "breakpoint.h"
@@ -39,10 +44,10 @@ bool fsr_is_debug_event(unsigned long fsr) {
     }
 }
 
-bool data_abort_handler(bool *skip_handling_abort, unsigned long *address) {
+bool data_abort_handler(unsigned long *address) {
     unsigned long dfsr = __arm_mrc(15, 0, 5, 0, 0); // read dfsr
 
-    if (!fsr_is_debug_event(dfsr)) { // validate_dfsr
+    if (!fsr_is_debug_event(dfsr)) {
         // did we get here while checking memory?
         if (g_abort_memory_test_active) {
             g_abort_memory_test_got_fault = true; // mark that the memory test failed and return without 
@@ -61,10 +66,10 @@ bool data_abort_handler(bool *skip_handling_abort, unsigned long *address) {
     return true;
 }
 
-bool prefetch_abort_handler(bool *skip_handling_abort) {
+bool prefetch_abort_handler() {
     unsigned long ifsr = __arm_mrc(15, 0, 5, 0, 1); // read ifsr
 
-    if (!fsr_is_debug_event(ifsr)) { // validate_ifsr
+    if (!fsr_is_debug_event(ifsr)) {
         // we got here because of some fault that wasn't ours
         // TODO: jump to original handler
         target_log("uncaught prefetch abort\n");
@@ -74,21 +79,27 @@ bool prefetch_abort_handler(bool *skip_handling_abort) {
     return true;
 }
 
+// this function is called from abort.S's abort_interrupt_handler.
+// if needed it calls arm_breakpoint_handler to pass the control upwards to the core
 unsigned long abort_handler(unsigned long address, unsigned long sp, bool is_prefetch_abort) {
     unsigned long ivt = determine_ivt();
 
-    bool skip_handling_abort = false;
+    // prefetch_abort_handler and data_abort_handler return true if we should continue and propagate
+    // the event upward, and false if we should just return now.
+    // data_abort_handler can change address since when we test memory and we got data abort, we want
+    // to skip the faulty instruction.
     if (is_prefetch_abort) {
-        if (!prefetch_abort_handler(&skip_handling_abort)) {
+        if (!prefetch_abort_handler()) {
             return address;
         }
     }
     else {
-        if (!data_abort_handler(&skip_handling_abort, &address)) {
+        if (!data_abort_handler(&address)) {
             return address;
         }
     }
 
+    // TODO: deal with this higher up
     if (!breakpoint_exists(address)) {
         target_log("debug event without a breakpoint (is_prefetch_abort=%d, address=0x%08x)\n", is_prefetch_abort, address);
         return address;

@@ -36,3 +36,4 @@ enum
 
 CORE_ADDR
 mips32_next_pc (struct regcache *regcache, CORE_ADDR pc);
+

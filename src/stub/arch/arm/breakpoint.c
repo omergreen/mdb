@@ -94,9 +94,9 @@ void arch_jump_breakpoint_disable(struct breakpoint *bp) {
     cache_flush((void *)bp->address, BREAKPOINT_LENGTH);
 }
 
-
+// init the IVT abort handler if it's our first time
 void ivt_breakpoint_init_handler() {
-    if (!g_target_config.should_override_ivt) {
+    if (!g_target_config.should_override_ivt) { // maybe this target works differently? allow for per-target override
         return;
     }
 
@@ -112,7 +112,8 @@ bool arch_software_breakpoint_enable(struct breakpoint *bp) {
 
     memcpy(bp->arch_specific.original_data, (void *)bp->address, sizeof(bp->arch_specific.original_data));
 #ifdef TARGET_TYPE_LINUX
-    *(unsigned int *)bp->address = 0xffffffff; // qemu linux doesn't really work well with SIGTRAP (at least for arm) so we use SIGILL instead for debugging
+    *(unsigned int *)bp->address = 0xffffffff; // qemu linux doesn't really work well with SIGTRAP (at least for arm) 
+                                               // so we use SIGILL instead for debugging
 #else
     *(unsigned int *)bp->address = convert_code_data_32(0xe1200070); // bkpt
 #endif

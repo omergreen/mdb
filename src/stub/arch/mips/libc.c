@@ -1,5 +1,5 @@
 /*
- * Implements general functions related to the ARM architecture
+ * Implements general functions related to the mips architecture
  */
 
 #include <target/interface.h>
